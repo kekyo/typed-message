@@ -32,7 +32,7 @@ npm install typed-message
 ```typescript
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
-import { typedMessagePlugin } from 'typed-message'
+import { typedMessagePlugin } from 'typed-message/vite'
 
 export default defineConfig({
   plugins: [
@@ -44,6 +44,8 @@ export default defineConfig({
   ]
 })
 ```
+
+**注記**: Viteプラグインは`typed-message/vite`サブパスからインポートされ、メインライブラリを軽量に保ち、ランタイム使用時に不要なVite依存関係を避けます。
 
 ### 2. ロケールファイルの作成
 
@@ -311,9 +313,13 @@ ViteプラグインでJSONからTypeScriptコードを生成します。プレ�
 #### 使用例
 
 ```typescript
+import { typedMessagePlugin } from 'typed-message/vite'
+
 typedMessagePlugin({
-  localeDir: 'locales',
-  outputPath: 'src/messages.ts'
+  localeDir: 'locale',
+  outputPath: 'src/generated/messages.ts',
+  // 優先順序: ja.json, en.json, fallback.jsonの順にメッセージを検索する
+  fallbackPriorityOrder: ['ja', 'en', 'fallback']
 })
 ```
 
@@ -322,6 +328,8 @@ typedMessagePlugin({
 `fallbackPriorityOrder`オプションで、フォールバックメッセージの優先順序を制御できます：
 
 ```typescript
+import { typedMessagePlugin } from 'typed-message/vite'
+
 typedMessagePlugin({
   localeDir: 'locale',
   outputPath: 'src/generated/messages.ts',

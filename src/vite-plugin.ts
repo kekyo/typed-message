@@ -293,4 +293,4 @@ ${messageItems}
 }
 
 // Plugin standalone export (for separate entry point)
-export default typedMessagePlugin 
+export default typedMessagePlugin; 
