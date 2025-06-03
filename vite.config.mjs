@@ -52,6 +52,7 @@ export default defineConfig(({ command, mode }) => {
             react: 'React',
             'react-dom': 'ReactDOM',
           },
+          exports: 'named',
         },
       },
       sourcemap: true,
