@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
+import dts from 'vite-plugin-dts'
 import { resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
@@ -25,7 +26,15 @@ export default defineConfig(({ command, mode }) => {
 
   // Library build mode
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      dts({
+        include: ['src/**/*'],
+        exclude: ['src/**/*.test.*', 'src/**/*.spec.*'],
+        outDir: 'dist',
+        insertTypesEntry: true,
+      })
+    ],
     build: {
       lib: {
         entry: {
