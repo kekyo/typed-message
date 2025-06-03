@@ -1,16 +1,40 @@
-import React, { createContext, useContext, useCallback } from 'react';
+import { createContext, useContext, useCallback, useMemo } from 'react';
 import type { MessageDictionary, TypedMessageProviderProps, MessageItem, SimpleMessageItem } from './types';
 
 // Create Context
 const TypedMessageContext = createContext<MessageDictionary | null>(null);
 
-// Provider component
-export const TypedMessageProvider: React.FC<TypedMessageProviderProps> = ({ 
-  messages, 
-  children 
-}) => {
+/**
+ * React context provider component for typed internationalization messages
+ * 
+ * Provides message dictionaries to child components through React context.
+ * Manages message retrieval and fallback processing throughout the component tree.
+ * All TypedMessage components and useTypedMessage hooks must be used within this provider.
+ * 
+ * @param props - Provider configuration props
+ * @param props.messages - Message dictionary containing key-value pairs of message identifiers and their translations
+ * @param props.children - Child React components that will have access to the message context
+ * 
+ * @example
+ * ```tsx
+ * import { TypedMessageProvider } from 'typed-message';
+ * import enMessages from '../locale/en.json';
+ * 
+ * const App = () => {
+ *   return (
+ *     <TypedMessageProvider messages={enMessages}>
+ *       <MyComponent />
+ *     </TypedMessageProvider>
+ *   );
+ * };
+ * ```
+ */
+export const TypedMessageProvider = ({ 
+  messages, children
+}: TypedMessageProviderProps) => {
+  const ms = useMemo(() => messages ?? {}, [messages]);
   return (
-    <TypedMessageContext.Provider value={messages}>
+    <TypedMessageContext.Provider value={ms}>
       {children}
     </TypedMessageContext.Provider>
   );
@@ -36,7 +60,38 @@ function replacePlaceholders(template: string, args: readonly any[]): string {
   });
 }
 
-// Hook for getting message function
+/**
+ * React hook for retrieving type-safe internationalized messages
+ * 
+ * Returns a function that can retrieve both non-parameterized and parameterized messages
+ * in a type-safe manner. The function automatically handles message lookup from the
+ * provided dictionary, fallback processing, and parameter substitution for dynamic messages.
+ * 
+ * Must be used within a TypedMessageProvider context.
+ * 
+ * @returns A getMessage function with two overloads:
+ *   - `(messageItem: SimpleMessageItem) => string` - For non-parameterized messages
+ *   - `(messageItem: MessageItem<T>, args: T) => string` - For parameterized messages
+ * 
+ * @throws {Error} When used outside of TypedMessageProvider context
+ * 
+ * @example
+ * ```tsx
+ * import { useTypedMessage } from 'typed-message';
+ * import { messages } from './generated/messages';
+ * 
+ * const MyComponent = () => {
+ *   const getMessage = useTypedMessage();
+ *   
+ *   return (
+ *     <div>
+ *       <h1>{getMessage(messages.WELCOME_MESSAGE)}</h1>
+ *       <p>{getMessage(messages.WELCOME_USER, ["John", "Doe", 25])}</p>
+ *     </div>
+ *   );
+ * };
+ * ```
+ */
 export const useTypedMessage = () => {
   const messages = useContext(TypedMessageContext);
   
@@ -88,4 +143,4 @@ export const useTypedMessage = () => {
   );
   
   return getMessage;
-}; 
+};

@@ -3,10 +3,44 @@ import { readFileSync, existsSync, readdirSync, statSync, writeFileSync, mkdirSy
 import { join, resolve, dirname, extname, basename } from 'path';
 import type { PlaceholderInfo, ParsedMessage } from './types';
 
-// Plugin options type definition
+/**
+ * Configuration options for the typed-message Vite plugin
+ * 
+ * Defines how the plugin should process locale files and generate TypeScript code.
+ * The plugin automatically scans JSON files in the specified directory and generates
+ * type-safe message definitions with proper fallback handling.
+ * 
+ * @example
+ * ```typescript
+ * import { typedMessagePlugin } from 'typed-message/vite';
+ * 
+ * // Basic usage with defaults
+ * typedMessagePlugin()
+ * 
+ * // Custom configuration
+ * typedMessagePlugin({
+ *   localeDir: 'public/locales',
+ *   outputPath: 'src/i18n/messages.ts',
+ *   fallbackPriorityOrder: ['ja', 'en', 'fallback']
+ * })
+ * ```
+ */
 export interface TypedMessagePluginOptions {
+  /** 
+   * Directory containing JSON locale files (relative to project root)
+   * @default 'locale'
+   */
   localeDir?: string;
+  /** 
+   * Output path for generated TypeScript file (relative to project root)
+   * @default 'src/generated/messages.ts'
+   */
   outputPath?: string;
+  /** 
+   * Priority order for fallback message resolution. Messages are searched
+   * from first to last element, with later elements taking precedence.
+   * @default ['en', 'fallback']
+   */
   fallbackPriorityOrder?: string[];
 }
 
@@ -110,7 +144,38 @@ function generateFormatter(template: string, placeholders: PlaceholderInfo[]): s
   return `(${params}) => \`${formattedTemplate.replace(/`/g, '\\`')}\``;
 }
 
-// typed-message plugin
+/**
+ * Vite plugin for automatic generation of type-safe internationalization messages
+ * 
+ * This plugin scans JSON locale files, analyzes message patterns and placeholders,
+ * then generates TypeScript code with proper type definitions. It supports:
+ * - Automatic placeholder detection and type inference
+ * - Hot reload during development when locale files change
+ * - Configurable fallback priority order
+ * - Generation of both SimpleMessageItem and MessageItem types
+ * 
+ * The generated code provides compile-time type safety for message keys and parameters,
+ * ensuring that parameterized messages receive the correct argument types.
+ * 
+ * @param options - Plugin configuration options
+ * @returns Vite plugin instance with build-time code generation and hot reload support
+ * 
+ * @example
+ * ```typescript
+ * // vite.config.ts
+ * import { defineConfig } from 'vite';
+ * import { typedMessagePlugin } from 'typed-message/vite';
+ * 
+ * export default defineConfig({
+ *   plugins: [
+ *     typedMessagePlugin({
+ *       localeDir: 'locale',
+ *       outputPath: 'src/generated/messages.ts'
+ *     })
+ *   ]
+ * });
+ * ```
+ */
 export const typedMessagePlugin = (options: TypedMessagePluginOptions = {}): Plugin => {
   const opts = { ...defaultOptions, ...options };
   let rootDir = '';
@@ -293,4 +358,4 @@ ${messageItems}
 }
 
 // Plugin standalone export (for separate entry point)
-export default typedMessagePlugin; 
+export default typedMessagePlugin;
