@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useCallback } from 'react';
 import type { MessageDictionary, TypedMessageProviderProps, MessageItem, SimpleMessageItem } from './types';
 
 // Create Context
@@ -45,49 +45,47 @@ export const useTypedMessage = () => {
     throw new Error('useTypedMessage must be used within a TypedMessageProvider');
   }
   
-  // Overload for case without arguments
-  function getMessage(
-    messageItem: SimpleMessageItem
-  ): string;
+  // Define the overloaded function type
+  type GetMessageFunction = {
+    (messageItem: SimpleMessageItem): string;
+    <T extends readonly [any, ...any[]]>(messageItem: MessageItem<T>, args: T): string;
+  };
   
-  // Overload for case with arguments
-  function getMessage<T extends readonly [any, ...any[]]>(
-    messageItem: MessageItem<T>,
-    args: T
-  ): string;
-  
-  // Implementation
-  function getMessage<T extends readonly [any, ...any[]]>(
-    messageItem: SimpleMessageItem | MessageItem<T>,
-    args?: T
-  ): string {
-    // 1. Get message from context
-    let localizedMessage = messages![messageItem.key];
-    
-    // 2. Use fallback if no localized message
-    if (!localizedMessage) {
-      // For SimpleMessageItem, fallback is a string
-      // For MessageItem, fallback is a function
-      if (typeof messageItem.fallback === 'function') {
-        // MessageItem<T> case
-        if (args) {
-          return (messageItem.fallback as (...args: T) => string)(...args);
+  // Memoize the getMessage function using useCallback
+  const getMessage = useCallback(
+    ((
+      messageItem: SimpleMessageItem | MessageItem<any>,
+      args?: any
+    ): string => {
+      // 1. Get message from context
+      let localizedMessage = messages![messageItem.key];
+      
+      // 2. Use fallback if no localized message
+      if (!localizedMessage) {
+        // For SimpleMessageItem, fallback is a string
+        // For MessageItem, fallback is a function
+        if (typeof messageItem.fallback === 'function') {
+          // MessageItem<T> case
+          if (args) {
+            return (messageItem.fallback as (...args: any) => string)(...args);
+          } else {
+            return (messageItem.fallback as () => string)();
+          }
         } else {
-          return (messageItem.fallback as () => string)();
+          // SimpleMessageItem case
+          localizedMessage = messageItem.fallback;
         }
-      } else {
-        // SimpleMessageItem case
-        localizedMessage = messageItem.fallback;
       }
-    }
-    
-    // 3. Placeholder replacement
-    if (args && args.length > 0) {
-      return replacePlaceholders(localizedMessage, args);
-    } else {
-      return localizedMessage;
-    }
-  }
+      
+      // 3. Placeholder replacement
+      if (args && args.length > 0) {
+        return replacePlaceholders(localizedMessage, args);
+      } else {
+        return localizedMessage;
+      }
+    }) as GetMessageFunction,
+    [messages] // Only recreate when messages change
+  );
   
   return getMessage;
 }; 
