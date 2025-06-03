@@ -41,11 +41,28 @@ export const TypedMessageProvider = ({
 };
 
 // Function to replace placeholders
-function replacePlaceholders(template: string, args: readonly any[]): string {
+function replacePlaceholders(template: string, args: readonly any[], paramNames?: readonly string[]): string {
   // Placeholder regex: {name} or {name:type}
   const placeholderRegex = /\{(\w+)(?::\w+)?\}/g;
-  let argIndex = 0;
   
+  // If paramNames are provided, use name-based replacement
+  if (paramNames && paramNames.length > 0) {
+    return template.replace(placeholderRegex, (match, paramName) => {
+      const paramIndex = paramNames.indexOf(paramName);
+      if (paramIndex !== -1 && paramIndex < args.length) {
+        const value = args[paramIndex];
+        // Format Date type appropriately
+        if (value instanceof Date) {
+          return value.toLocaleDateString();
+        }
+        return String(value);
+      }
+      return match; // Return as-is if parameter not found
+    });
+  }
+  
+  // Fallback to index-based replacement for backward compatibility
+  let argIndex = 0;
   return template.replace(placeholderRegex, (match) => {
     if (argIndex < args.length) {
       const value = args[argIndex];
@@ -134,7 +151,8 @@ export const useTypedMessage = () => {
       
       // 3. Placeholder replacement
       if (args && args.length > 0) {
-        return replacePlaceholders(localizedMessage, args);
+        const paramNames = 'paramNames' in messageItem ? messageItem.paramNames : undefined;
+        return replacePlaceholders(localizedMessage, args, paramNames);
       } else {
         return localizedMessage;
       }

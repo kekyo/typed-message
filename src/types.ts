@@ -32,7 +32,8 @@ export interface SimpleMessageItem {
  * ```typescript
  * const paramMessage: MessageItem<readonly [string, number]> = {
  *   key: "WELCOME_USER",
- *   fallback: (name: string, age: number) => `Hello ${name}, you are ${age} years old!`
+ *   fallback: (name: string, age: number) => `Hello ${name}, you are ${age} years old!`,
+ *   paramNames: ["name", "age"]
  * };
  * ```
  */
@@ -41,6 +42,8 @@ export interface MessageItem<T extends readonly [any, ...any[]]> {
   key: string;
   /** A function that takes parameters and returns a formatted string as fallback */
   fallback: (...args: T) => string;
+  /** Optional array of parameter names for name-based placeholder replacement */
+  paramNames?: readonly string[];
 }
 
 /**

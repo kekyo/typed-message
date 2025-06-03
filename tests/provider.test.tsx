@@ -203,4 +203,112 @@ describe('TypedMessageProvider', () => {
       'useTypedMessage must be used within a TypedMessageProvider'
     );
   });
+
+  it('handles placeholders in different orders correctly with paramNames', () => {
+    const PlaceholderOrderTestComponent: React.FC = () => {
+      const getMessage = useTypedMessage();
+      const testMessage: MessageItem<readonly [firstName: string, lastName: string, age: number]> = { 
+        key: 'PLACEHOLDER_ORDER_KEY', 
+        fallback: (firstName: string, lastName: string, age: number) => `Hello ${firstName} ${lastName}, you are ${age} years old`,
+        paramNames: ['firstName', 'lastName', 'age']
+      };
+      const result = getMessage(testMessage, ['太郎', '田中', 25]);
+      return <div data-testid="placeholder-order-message">{result}</div>;
+    };
+
+    // Japanese: {lastName} {firstName} order
+    const jaMessages = {
+      PLACEHOLDER_ORDER_KEY: 'こんにちは {lastName} {firstName}さん、あなたは{age:number}歳です！',
+    };
+
+    render(
+      <TypedMessageProvider messages={jaMessages}>
+        <PlaceholderOrderTestComponent />
+      </TypedMessageProvider>
+    );
+    
+    const element = screen.getByTestId('placeholder-order-message');
+    expect(element.textContent).toBe('こんにちは 田中 太郎さん、あなたは25歳です！');
+  });
+
+  it('handles placeholders in different orders correctly - English version', () => {
+    const PlaceholderOrderTestComponent: React.FC = () => {
+      const getMessage = useTypedMessage();
+      const testMessage: MessageItem<readonly [firstName: string, lastName: string, age: number]> = { 
+        key: 'PLACEHOLDER_ORDER_KEY', 
+        fallback: (firstName: string, lastName: string, age: number) => `Hello ${firstName} ${lastName}, you are ${age} years old`,
+        paramNames: ['firstName', 'lastName', 'age']
+      };
+      const result = getMessage(testMessage, ['太郎', '田中', 25]);
+      return <div data-testid="placeholder-order-message">{result}</div>;
+    };
+
+    // English: {firstName} {lastName} order
+    const enMessages = {
+      PLACEHOLDER_ORDER_KEY: 'Hello {firstName} {lastName}, you are {age:number} years old!',
+    };
+
+    render(
+      <TypedMessageProvider messages={enMessages}>
+        <PlaceholderOrderTestComponent />
+      </TypedMessageProvider>
+    );
+    
+    const element = screen.getByTestId('placeholder-order-message');
+    expect(element.textContent).toBe('Hello 太郎 田中, you are 25 years old!');
+  });
+
+  it('handles missing placeholders gracefully with paramNames', () => {
+    const MissingPlaceholderTestComponent: React.FC = () => {
+      const getMessage = useTypedMessage();
+      const testMessage: MessageItem<readonly [firstName: string, lastName: string, age: number]> = { 
+        key: 'MISSING_PLACEHOLDER_KEY', 
+        fallback: (firstName: string, lastName: string, age: number) => `Hello ${firstName} ${lastName}, you are ${age} years old`,
+        paramNames: ['firstName', 'lastName', 'age']
+      };
+      const result = getMessage(testMessage, ['太郎', '田中', 25]);
+      return <div data-testid="missing-placeholder-message">{result}</div>;
+    };
+
+    // Message with only some placeholders
+    const messages = {
+      MISSING_PLACEHOLDER_KEY: 'Hello {firstName}, welcome! Age: {age:number}',
+    };
+
+    render(
+      <TypedMessageProvider messages={messages}>
+        <MissingPlaceholderTestComponent />
+      </TypedMessageProvider>
+    );
+    
+    const element = screen.getByTestId('missing-placeholder-message');
+    expect(element.textContent).toBe('Hello 太郎, welcome! Age: 25');
+  });
+
+  it('falls back to index-based replacement when paramNames is not provided', () => {
+    const IndexBasedTestComponent: React.FC = () => {
+      const getMessage = useTypedMessage();
+      const testMessage: MessageItem<readonly [firstName: string, lastName: string, age: number]> = { 
+        key: 'INDEX_BASED_KEY', 
+        fallback: (firstName: string, lastName: string, age: number) => `Hello ${firstName} ${lastName}, you are ${age} years old`
+        // paramNames not provided - should fall back to index-based replacement
+      };
+      const result = getMessage(testMessage, ['太郎', '田中', 25]);
+      return <div data-testid="index-based-message">{result}</div>;
+    };
+
+    const messages = {
+      INDEX_BASED_KEY: 'Hello {firstName} {lastName}, you are {age:number} years old!',
+    };
+
+    render(
+      <TypedMessageProvider messages={messages}>
+        <IndexBasedTestComponent />
+      </TypedMessageProvider>
+    );
+    
+    const element = screen.getByTestId('index-based-message');
+    // With index-based replacement, parameters should be matched by order
+    expect(element.textContent).toBe('Hello 太郎 田中, you are 25 years old!');
+  });
 }); 
