@@ -25,6 +25,11 @@
   ],
   "author": "Kouji Matsui (@kekyo@mi.kekyo.net)",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kekyo/typed-message.git"
+  },
+  "homepage": "https://github.com/kekyo/typed-message#readme",
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
