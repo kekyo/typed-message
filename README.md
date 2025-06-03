@@ -32,7 +32,7 @@ Add the plugin to your `vite.config.ts`:
 ```typescript
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
-import { typedMessagePlugin } from 'typed-message'
+import { typedMessagePlugin } from 'typed-message/vite'
 
 export default defineConfig({
   plugins: [
@@ -44,6 +44,8 @@ export default defineConfig({
   ]
 })
 ```
+
+**Note**: The Vite plugin is imported from `typed-message/vite` sub-path to keep the main library lightweight and avoid unnecessary Vite dependencies for runtime usage.
 
 ### 2. Creating Locale Files
 
@@ -311,9 +313,13 @@ A Vite plugin that generates TypeScript code from JSON. It detects placeholders 
 #### Example
 
 ```typescript
+import { typedMessagePlugin } from 'typed-message/vite'
+
 typedMessagePlugin({
-  localeDir: 'locales',
-  outputPath: 'src/messages.ts'
+  localeDir: 'locale',
+  outputPath: 'src/generated/messages.ts',
+  // Priority order: search messages in ja.json, en.json, fallback.json order
+  fallbackPriorityOrder: ['ja', 'en', 'fallback']
 })
 ```
 
@@ -322,6 +328,8 @@ typedMessagePlugin({
 The `fallbackPriorityOrder` option controls the priority order of fallback messages:
 
 ```typescript
+import { typedMessagePlugin } from 'typed-message/vite'
+
 typedMessagePlugin({
   localeDir: 'locale',
   outputPath: 'src/generated/messages.ts',

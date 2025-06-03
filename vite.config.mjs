@@ -28,10 +28,13 @@ export default defineConfig(({ command, mode }) => {
     plugins: [react()],
     build: {
       lib: {
-        entry: resolve(__dirname, 'src/index.ts'),
+        entry: {
+          index: resolve(__dirname, 'src/index.ts'),
+          'vite-plugin': resolve(__dirname, 'src/vite.ts'),
+        },
         name: 'TypedMessage',
         formats: ['es', 'cjs'],
-        fileName: (format) => `index.${format === 'es' ? 'es.js' : 'js'}`,
+        fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'es.js' : 'js'}`,
       },
       rollupOptions: {
         external: ['react', 'react-dom', 'fs', 'path', 'vite'],
