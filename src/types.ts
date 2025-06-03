@@ -17,8 +17,8 @@ export interface MessageDictionary {
 
 // TypedMessageProvider property type definition
 export interface TypedMessageProviderProps {
-  messages: MessageDictionary;
-  children: React.ReactNode;
+  messages?: MessageDictionary;
+  children?: React.ReactNode;
 }
 
 // Type helper for formatter functions

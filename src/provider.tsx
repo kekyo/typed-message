@@ -1,16 +1,16 @@
-import React, { createContext, useContext, useCallback } from 'react';
+import { createContext, useContext, useCallback, useMemo } from 'react';
 import type { MessageDictionary, TypedMessageProviderProps, MessageItem, SimpleMessageItem } from './types';
 
 // Create Context
 const TypedMessageContext = createContext<MessageDictionary | null>(null);
 
 // Provider component
-export const TypedMessageProvider: React.FC<TypedMessageProviderProps> = ({ 
-  messages, 
-  children 
-}) => {
+export const TypedMessageProvider = ({ 
+  messages, children
+}: TypedMessageProviderProps) => {
+  const ms = useMemo(() => messages ?? {}, [messages]);
   return (
-    <TypedMessageContext.Provider value={messages}>
+    <TypedMessageContext.Provider value={ms}>
       {children}
     </TypedMessageContext.Provider>
   );
