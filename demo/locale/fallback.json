@@ -1,0 +1,22 @@
+{
+  "TITLE": "TypedMessage Library Demo",
+  "SUBTITLE": "Type-safe Internationalization Message System",
+  "DESCRIPTION": "This demo page allows you to experience the basic functionality of the typed-message library.",
+  "WELCOME_MESSAGE": "Welcome to the typed-message library!",
+  "CHANGE_LANGUAGE": "Change Language",
+  "CURRENT_LANGUAGE": "Current Language",
+  "SAMPLE_BUTTON": "Sample Button",
+  "FEATURES_TITLE": "Key Features",
+  "FEATURE_TYPE_SAFE": "Type-safe with TypeScript",
+  "FEATURE_HOT_RELOAD": "Hot Reload Support",
+  "FEATURE_PRIORITY": "Priority-based Aggregation",
+  "FOOTER_TEXT": "Provided under MIT License",
+  "WELCOME_USER": "FB:Hello {firstName} {lastName}, you are {age:number} years old!",
+  "ITEM_COUNT": "FB:You have {count:number} {itemType} in your cart",
+  "FORMATTED_DATE": "FB:Today is {date:date} and the temperature is {temperature:number}°C",
+  "FALLBACK_ONLY_TITLE": "FB:Fallback Functionality Test",
+  "FALLBACK_ONLY_MESSAGE": "FB:This message is only defined in fallback.json",
+  "FALLBACK_ONLY_DESCRIPTION": "FB:Even when switching languages, the messages in this section will not change. This demonstrates that the fallback functionality is working correctly.",
+  "FALLBACK_ONLY_NOTE": "FB:Note: This message is not defined in en.json or ja.json",
+  "FALLBACK_ONLY_DEMO": "FB:Fallback Demo {value:number}: {status}"
+}

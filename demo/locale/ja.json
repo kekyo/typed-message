@@ -1,0 +1,17 @@
+{
+  "TITLE": "TypedMessage ライブラリデモ",
+  "SUBTITLE": "タイプセーフな国際化メッセージシステム",
+  "DESCRIPTION": "このデモページでは、typed-messageライブラリの基本的な機能を実際に体験できます。",
+  "WELCOME_MESSAGE": "typed-messageライブラリへようこそ！",
+  "CHANGE_LANGUAGE": "言語を変更する",
+  "CURRENT_LANGUAGE": "現在の言語",
+  "SAMPLE_BUTTON": "サンプルボタン",
+  "FEATURES_TITLE": "主な機能",
+  "FEATURE_TYPE_SAFE": "TypeScriptでタイプセーフ",
+  "FEATURE_HOT_RELOAD": "ホットリロード対応",
+  "FEATURE_PRIORITY": "優先順位による集約機能",
+  "FOOTER_TEXT": "MITライセンスで提供されています",
+  "WELCOME_USER": "こんにちは {firstName} {lastName}さん、あなたは{age:number}歳です！",
+  "ITEM_COUNT": "カートに{count:number}個の{itemType}があります",
+  "FORMATTED_DATE": "今日は{date:date}で、気温は{temperature:number}°Cです"
+} 

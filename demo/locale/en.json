@@ -1,0 +1,17 @@
+{
+  "TITLE": "TypedMessage Library Demo",
+  "SUBTITLE": "Type-safe Internationalization Message System",
+  "DESCRIPTION": "This demo page showcases the basic functionality of the typed-message library.",
+  "WELCOME_MESSAGE": "Welcome to typed-message library!",
+  "CHANGE_LANGUAGE": "Change Language",
+  "CURRENT_LANGUAGE": "Current Language",
+  "SAMPLE_BUTTON": "Sample Button",
+  "FEATURES_TITLE": "Key Features",
+  "FEATURE_TYPE_SAFE": "Type-safe with TypeScript",
+  "FEATURE_HOT_RELOAD": "Hot Reload Support",
+  "FEATURE_PRIORITY": "Priority-based Aggregation",
+  "FOOTER_TEXT": "Licensed under MIT License",
+  "WELCOME_USER": "Hello {firstName} {lastName}, you are {age:number} years old!",
+  "ITEM_COUNT": "You have {count:number} {itemType} in your cart",
+  "FORMATTED_DATE": "Today is {date:date} and the temperature is {temperature:number}°C"
+} 
