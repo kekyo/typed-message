@@ -383,6 +383,86 @@ const paramResult = getMessage(paramMessage, { name: "John", age: 30 })
 
 ## Advanced Features
 
+### Placeholder Type Validation
+
+The Vite plugin automatically validates placeholder types across different locale files and provides warnings when inconsistencies are detected.
+
+#### Type Consistency Checking
+
+When the same placeholder name is used with different types across locale files, the plugin will:
+
+1. **Generate JSDoc warnings** in the generated TypeScript code
+2. **Display console warnings** during build time
+3. **Use explicit types** over implicit `string` types when available
+
+**Example of type conflicts:**
+
+**locale/fallback.json**
+```json
+{
+  "USER_MESSAGE": "User {userId} has {balance:number} points and status {isActive:boolean}"
+}
+```
+
+**locale/en.json**
+```json
+{
+  "USER_MESSAGE": "User {userId:number} has {balance:number} points and status {isActive:boolean}"
+}
+```
+
+**locale/ja.json**
+```json
+{
+  "USER_MESSAGE": "ユーザー{userId:boolean}の残高は{balance:string}ポイント、ステータスは{isActive:number}です"
+}
+```
+
+**Generated TypeScript code with warnings:**
+```typescript
+/**
+ * Warning: Placeholder types do not match across locales
+ * - userId: fallback.json: string, en.json: number, ja.json: boolean
+ * - balance: fallback.json: number, en.json: number, ja.json: string
+ * - isActive: fallback.json: boolean, en.json: boolean, ja.json: number
+ */
+USER_MESSAGE: {
+  key: "USER_MESSAGE",
+  fallback: ({ userId, balance, isActive }: { userId: number, balance: number, isActive: boolean }) => `...`
+} as MessageItem<{ userId: number; balance: number; isActive: boolean }>
+```
+
+#### Type Resolution Rules
+
+1. **All types match**: No warnings generated
+2. **Implicit vs explicit types**: Explicit types (e.g., `:number`) take precedence over implicit `string` types
+3. **Type conflicts**: Plugin uses the first explicit type found in priority order and generates warnings
+
+#### Invalid JSON File Handling
+
+When locale files contain invalid JSON syntax, the plugin will:
+
+1. **Continue processing** other valid files
+2. **Generate JSDoc warnings** listing invalid files
+3. **Display console warnings** with error details
+
+**Example with invalid files:**
+
+**Generated TypeScript code:**
+```typescript
+/**
+ * Warning: Failed to load the following locale files
+ * - broken.json
+ * - invalid-syntax.json
+ * These files are not included in the generated code.
+ */
+export const messages = {
+  // ... only messages from valid files
+} as const;
+```
+
+This feature helps maintain type safety and consistency across your internationalization setup while providing clear feedback when issues are detected.
+
 ### Placeholder Order Independence
 
 With the object-based parameter system, placeholders can appear in any order in different locale files:

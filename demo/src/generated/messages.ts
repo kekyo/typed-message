@@ -54,15 +54,15 @@ export const messages = {
   } as SimpleMessageItem,
   WELCOME_USER: { 
     key: "WELCOME_USER", 
-    fallback: ({ firstName, lastName, age }) => `FB:Hello ${firstName} ${lastName}, you are ${age} years old!` 
+    fallback: ({ firstName, lastName, age }: { firstName: string, lastName: string, age: number }) => `FB:Hello ${firstName} ${lastName}, you are ${age} years old!` 
   } as MessageItem<{ firstName: string; lastName: string; age: number }>,
   ITEM_COUNT: { 
     key: "ITEM_COUNT", 
-    fallback: ({ count, itemType }) => `FB:You have ${count} ${itemType} in your cart` 
+    fallback: ({ count, itemType }: { count: number, itemType: string }) => `FB:You have ${count} ${itemType} in your cart` 
   } as MessageItem<{ count: number; itemType: string }>,
   FORMATTED_DATE: { 
     key: "FORMATTED_DATE", 
-    fallback: ({ date, temperature }) => `FB:Today is ${date} and the temperature is ${temperature}°C` 
+    fallback: ({ date, temperature }: { date: Date, temperature: number }) => `FB:Today is ${date} and the temperature is ${temperature}°C` 
   } as MessageItem<{ date: Date; temperature: number }>,
   FALLBACK_ONLY_TITLE: { 
     key: "FALLBACK_ONLY_TITLE", 
@@ -82,6 +82,6 @@ export const messages = {
   } as SimpleMessageItem,
   FALLBACK_ONLY_DEMO: { 
     key: "FALLBACK_ONLY_DEMO", 
-    fallback: ({ value, status }) => `FB:Fallback Demo ${value}: ${status}` 
+    fallback: ({ value, status }: { value: number, status: string }) => `FB:Fallback Demo ${value}: ${status}` 
   } as MessageItem<{ value: number; status: string }>
 } as const;

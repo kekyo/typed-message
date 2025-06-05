@@ -383,6 +383,86 @@ const paramResult = getMessage(paramMessage, { name: "太郎", age: 30 })
 
 ## 高度な機能
 
+### プレースホルダ型検証
+
+Viteプラグインは異なるロケールファイル間でプレースホルダ型を自動的に検証し、不整合が検出された場合に警告を提供します。
+
+#### 型整合性チェック
+
+同じプレースホルダ名がロケールファイル間で異なる型で使用されている場合、プラグインは以下を行います：
+
+1. **生成されたTypeScriptコードにJSDoc警告を挿入**
+2. **ビルド時にコンソール警告を表示**
+3. **明示的な型を暗黙の`string`型より優先**
+
+**型競合の例：**
+
+**locale/fallback.json**
+```json
+{
+  "USER_MESSAGE": "User {userId} has {balance:number} points and status {isActive:boolean}"
+}
+```
+
+**locale/en.json**
+```json
+{
+  "USER_MESSAGE": "User {userId:number} has {balance:number} points and status {isActive:boolean}"
+}
+```
+
+**locale/ja.json**
+```json
+{
+  "USER_MESSAGE": "ユーザー{userId:boolean}の残高は{balance:string}ポイント、ステータスは{isActive:number}です"
+}
+```
+
+**警告付きの生成されたTypeScriptコード：**
+```typescript
+/**
+ * Warning: Placeholder types do not match across locales
+ * - userId: fallback.json: string, en.json: number, ja.json: boolean
+ * - balance: fallback.json: number, en.json: number, ja.json: string
+ * - isActive: fallback.json: boolean, en.json: boolean, ja.json: number
+ */
+USER_MESSAGE: {
+  key: "USER_MESSAGE",
+  fallback: ({ userId, balance, isActive }: { userId: number, balance: number, isActive: boolean }) => `...`
+} as MessageItem<{ userId: number; balance: number; isActive: boolean }>
+```
+
+#### 型解決ルール
+
+1. **すべての型が一致**: 警告なし
+2. **暗黙 vs 明示的型**: 明示的型（例：`:number`）が暗黙の`string`型より優先される
+3. **型競合**: プラグインは優先順序で最初に見つかった明示的型を使用し、警告を生成
+
+#### 無効なJSONファイルの処理
+
+ロケールファイルに無効なJSON構文が含まれている場合、プラグインは以下を行います：
+
+1. **他の有効なファイルの処理を継続**
+2. **無効なファイルをリストしたJSDoc警告を生成**
+3. **エラー詳細とともにコンソール警告を表示**
+
+**無効なファイルがある場合の例：**
+
+**生成されたTypeScriptコード：**
+```typescript
+/**
+ * Warning: Failed to load the following locale files
+ * - broken.json
+ * - invalid-syntax.json
+ * These files are not included in the generated code.
+ */
+export const messages = {
+  // ... 有効なファイルからのメッセージのみ
+} as const;
+```
+
+この機能は、国際化設定の型安全性と一貫性を維持しながら、問題が検出された際に明確なフィードバックを提供します。
+
 ### プレースホルダーの順序非依存
 
 オブジェクトベースのパラメータシステムにより、異なるロケールファイルでプレースホルダーが任意の順序で表示できます：
