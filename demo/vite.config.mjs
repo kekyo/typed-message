@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
-import { typedMessagePlugin } from '../src/vite.ts'
+import { typedMessagePlugin } from '../dist/vite-plugin.es.js'
 import { resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
@@ -14,7 +14,6 @@ export default defineConfig({
     typedMessagePlugin({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts',
-      enableFormatter: true,
       fallbackPriorityOrder: ['ja', 'en', 'fallback'],
     }),
   ],
@@ -23,8 +22,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'typed-message': resolve(__dirname, '../src/index.ts'),
-      'typed-message/vite': resolve(__dirname, '../src/vite.ts'),
+      'typed-message': resolve(__dirname, '../dist/index.js'),
     },
   },
 }) 

@@ -1,6 +1,6 @@
 # typed-message
 
-A TypeScript and React library for providing type-safe internationalization messages.
+A TypeScript and React library for providing type-safe internationalized messages.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![npm version](https://badge.fury.io/js/typed-message.svg)](https://badge.fury.io/js/typed-message)
@@ -151,19 +151,19 @@ const App = () => {
         <p>
           <TypedMessage 
             message={messages.WELCOME_USER} 
-            params={["John", "Doe", 25]} 
+            params={{ firstName: "John", lastName: "Doe", age: 25 }} 
           />
         </p>
         <p>
           <TypedMessage 
             message={messages.ITEM_COUNT} 
-            params={[3, "books"]} 
+            params={{ count: 3, itemType: "books" }} 
           />
         </p>
         <p>
           <TypedMessage 
             message={messages.FORMATTED_DATE} 
-            params={[new Date(), 23]} 
+            params={{ date: new Date(), temp: 23 }} 
           />
         </p>
         
@@ -200,10 +200,10 @@ const MyComponent = () => {
       <h1>{getMessage(messages.WELCOME_MESSAGE)}</h1>
       <button>{getMessage(messages.BUTTON_SUBMIT)}</button>
       
-      {/* Parameterized messages - Type-safe tuple format */}
-      <p>{getMessage(messages.WELCOME_USER, ["Jane", "Smith", 30])}</p>
-      <p>{getMessage(messages.ITEM_COUNT, [5, "apples"])}</p>
-      <p>{getMessage(messages.FORMATTED_DATE, [new Date(), 18])}</p>
+      {/* Parameterized messages - Type-safe object format */}
+      <p>{getMessage(messages.WELCOME_USER, { firstName: "Jane", lastName: "Smith", age: 30 })}</p>
+      <p>{getMessage(messages.ITEM_COUNT, { count: 5, itemType: "apples" })}</p>
+      <p>{getMessage(messages.FORMATTED_DATE, { date: new Date(), temp: 18 })}</p>
     </div>
   )
 }
@@ -268,7 +268,7 @@ A React component for displaying messages. Uses TypeScript overloads to handle b
 | Property | Type | Description |
 |----------|---------|------------|
 | `message` | `MessageItem<T>` | Message item to display |
-| `params` | `T` | Parameters to pass to the message (tuple format) |
+| `params` | `T` | Parameters to pass to the message (object format) |
 
 #### Example
 
@@ -279,7 +279,7 @@ A React component for displaying messages. Uses TypeScript overloads to handle b
 {/* Parameterized message */}
 <TypedMessage 
   message={messages.WELCOME_USER} 
-  params={["John", "Doe", 25]} 
+  params={{ firstName: "John", lastName: "Doe", age: 25 }} 
 />
 ```
 
@@ -290,12 +290,12 @@ TypeScript automatically infers the necessity and types of `params`:
 ```typescript
 // ✅ Correct usage
 <TypedMessage message={simpleMessage} />
-<TypedMessage message={paramMessage} params={["value1", 42]} />
+<TypedMessage message={paramMessage} params={{ name: "value1", count: 42 }} />
 
 // ❌ Compile errors
-<TypedMessage message={simpleMessage} params={["invalid"]} />
+<TypedMessage message={simpleMessage} params={{ invalid: "param" }} />
 <TypedMessage message={paramMessage} />  // params required
-<TypedMessage message={paramMessage} params={["wrong", "types"]} />
+<TypedMessage message={paramMessage} params={{ wrong: "types" }} />
 ```
 
 ### typedMessagePlugin
@@ -351,7 +351,6 @@ Types for generated message items.
 ```typescript
 interface SimpleMessageItem {
   key: string;
-  formatter: () => string;
   fallback: string;
 }
 ```
@@ -359,189 +358,163 @@ interface SimpleMessageItem {
 #### MessageItem (Parameterized)
 
 ```typescript
-interface MessageItem<T extends readonly [any, ...any[]]> {
+interface MessageItem<T extends Record<string, any>> {
   key: string;
-  formatter: (...args: T) => string;
   fallback: string;
 }
 ```
 
 - `key`: Key to search in the locale dictionary
-- `formatter`: Function that takes parameters and returns a formatted string
-- `fallback`: Fallback value when message is not found (determined at build time by Vite plugin)
+- `fallback`: The fallback message template with placeholder syntax
 
 ### useTypedMessage
 
-A hook to get the message retrieval function from TypedMessageProvider. This function takes message items, searches for messages in the dictionary, and uses the formatter function when not found.
+A hook to get the message retrieval function from TypedMessageProvider. This function takes message items, searches for messages in the dictionary, and uses the fallback template when not found.
 
 ```typescript
 const getMessage = useTypedMessage()
 
-// Get non-parameterized message
-const text = getMessage(messages.WELCOME_MESSAGE)
+// Non-parameterized messages
+const simpleResult = getMessage(simpleMessage)
 
-// Get parameterized message (tuple format)
-const userText = getMessage(messages.WELCOME_USER, ["John", "Doe", 25])
+// Parameterized messages
+const paramResult = getMessage(paramMessage, { name: "John", age: 30 })
 ```
 
-#### Return Value
+## Advanced Features
 
-Overloaded function:
-- `(message: SimpleMessageItem) => string` - For non-parameterized messages
-- `(message: MessageItem<T>, args: T) => string` - For parameterized messages
+### Placeholder Type Validation
 
-#### Example
+The Vite plugin automatically validates placeholder types across different locale files and provides warnings when inconsistencies are detected.
 
-```typescript
-const MyComponent = () => {
-  const getMessage = useTypedMessage()
-  
-  return (
-    <div>
-      <h1>{getMessage(messages.TITLE)}</h1>
-      <p>{getMessage(messages.WELCOME_USER, ["Taro", "Tanaka", 30])}</p>
-    </div>
-  )
-}
-```
+#### Type Consistency Checking
 
-**Note**: This function automatically handles fallback processing within the context. When a key doesn't exist in the dictionary, the formatter function or fallback value is used.
+When the same placeholder name is used with different types across locale files, the plugin will:
 
-## Generated Code Example
+1. **Generate JSDoc warnings** in the generated TypeScript code
+2. **Display console warnings** during build time
+3. **Use explicit types** over implicit `string` types when available
 
-`src/generated/messages.ts` (auto-generated):
+**Example of type conflicts:**
 
-```typescript
-// This file is auto-generated by typed-message plugin
-// Do not edit manually
-
-import type { MessageItem, SimpleMessageItem } from 'typed-message';
-
-export const messages = {
-  // Non-parameterized messages
-  WELCOME_MESSAGE: {
-    key: "WELCOME_MESSAGE",
-    formatter: () => "Welcome",
-    fallback: "Welcome"
-  } as SimpleMessageItem,
-  
-  BUTTON_SUBMIT: {
-    key: "BUTTON_SUBMIT",
-    formatter: () => "Submit",
-    fallback: "Submit"
-  } as SimpleMessageItem,
-
-  // Parameterized messages - Type-inferred by TypeScript!
-  WELCOME_USER: {
-    key: "WELCOME_USER",
-    formatter: (firstName: string, lastName: string, age: number) => 
-      `Hello ${firstName} ${lastName}, you are ${age} years old!`,
-    fallback: "Hello {firstName} {lastName}, you are {age:number} years old!"
-  } as MessageItem<readonly [firstName: string, lastName: string, age: number]>,
-  
-  ITEM_COUNT: {
-    key: "ITEM_COUNT",
-    formatter: (count: number, itemType: string) => 
-      `You have ${count} ${itemType}`,
-    fallback: "You have {count:number} {itemType}"
-  } as MessageItem<readonly [count: number, itemType: string]>,
-  
-  FORMATTED_DATE: {
-    key: "FORMATTED_DATE",
-    formatter: (date: Date, temp: number) => 
-      `Today is ${date.toLocaleDateString()}, temperature is ${temp}°C`,
-    fallback: "Today is {date:date}, temperature is {temp:number}°C"
-  } as MessageItem<readonly [date: Date, temp: number]>
-};
-```
-
-The `fallback` value is determined based on the priority specified in `fallbackPriorityOrder`.
-
-When placeholders are detected, the following processing is automatically performed:
-- Parse type information of placeholders (`{name:string}`, `{age:number}`, etc.)
-- Generate TypeScript named tuple types
-- Generate formatter functions using template literals
-- Ensure type safety of arguments
-
-## Key Features
-
-### Unified Component API
-
-Handle both non-parameterized and parameterized messages with a single `TypedMessage` component:
-
-```tsx
-// Same component for different usage patterns
-<TypedMessage message={messages.SIMPLE_MESSAGE} />
-<TypedMessage message={messages.PARAM_MESSAGE} params={[value1, value2]} />
-```
-
-### Type-level Constraints
-
-Using TypeScript overloads and generics to detect improper usage at compile time:
-
-```typescript
-// Cannot pass params to SimpleMessageItem
-<TypedMessage message={simpleMessage} params={[...]} />  // ❌ Error
-
-// params required for MessageItem
-<TypedMessage message={paramMessage} />  // ❌ Error
-
-// Correct type arguments required
-<TypedMessage message={userMessage} params={["name", 42, "extra"]} />  // ❌ Error
-```
-
-### Automatic Placeholder Analysis
-
-Automatically generate TypeScript types from placeholders in JSON:
-
+**locale/fallback.json**
 ```json
 {
-  "USER_INFO": "Name: {name}, Age: {age:number}, Active: {isActive:boolean}"
+  "USER_MESSAGE": "User {userId} has {balance:number} points and status {isActive:boolean}"
 }
 ```
 
-↓ Auto-generated
+**locale/en.json**
+```json
+{
+  "USER_MESSAGE": "User {userId:number} has {balance:number} points and status {isActive:boolean}"
+}
+```
 
+**locale/ja.json**
+```json
+{
+  "USER_MESSAGE": "ユーザー{userId:boolean}の残高は{balance:string}ポイント、ステータスは{isActive:number}です"
+}
+```
+
+**Generated TypeScript code with warnings:**
 ```typescript
-MessageItem<readonly [name: string, age: number, isActive: boolean]>
+/**
+ * Warning: Placeholder types do not match across locales
+ * - userId: fallback.json: string, en.json: number, ja.json: boolean
+ * - balance: fallback.json: number, en.json: number, ja.json: string
+ * - isActive: fallback.json: boolean, en.json: boolean, ja.json: number
+ */
+USER_MESSAGE: {
+  key: "USER_MESSAGE",
+  fallback: "User {userId:number} has {balance:number} points and status {isActive:boolean}"
+} as MessageItem<{ userId: number; balance: number; isActive: boolean }>
 ```
 
-## Development and Build
+#### Type Resolution Rules
 
-### Starting the Demo Page
+1. **All types match**: No warnings generated
+2. **Implicit vs explicit types**: Explicit types (e.g., `:number`) take precedence over implicit `string` types
+3. **Type conflicts**: Plugin uses the first explicit type found in priority order and generates warnings
 
-```bash
-npm run dev
+#### Invalid JSON File Handling
+
+When locale files contain invalid JSON syntax, the plugin will:
+
+1. **Continue processing** other valid files
+2. **Generate JSDoc warnings** listing invalid files
+3. **Display console warnings** with error details
+
+**Example with invalid files:**
+
+**Generated TypeScript code:**
+```typescript
+/**
+ * Warning: Failed to load the following locale files
+ * - broken.json
+ * - invalid-syntax.json
+ * These files are not included in the generated code.
+ */
+export const messages = {
+  // ... only messages from valid files
+} as const;
 ```
 
-The demo page can be viewed at http://localhost:3000.
+This feature helps maintain type safety and consistency across your internationalization setup while providing clear feedback when issues are detected.
 
-### Running Tests
+### Placeholder Order Independence
 
-```bash
-npm test          # Unit tests
+With the object-based parameter system, placeholders can appear in any order in different locale files:
+
+**locale/en.json**
+```json
+{
+  "USER_INFO": "Hello {firstName} {lastName}, you are {age:number} years old!"
+}
 ```
 
-### Building the Library
-
-```bash
-npm run build
+**locale/ja.json**  
+```json
+{
+  "USER_INFO": "こんにちは {lastName} {firstName}さん、あなたは{age:number}歳です！"
+}
 ```
 
-## Contributing
+Both will work correctly with the same parameter object:
 
-Pull requests and issue reports are welcome.
+```tsx
+<TypedMessage 
+  message={messages.USER_INFO} 
+  params={{ firstName: "太郎", lastName: "田中", age: 25 }} 
+/>
+```
+
+Results:
+- English: "Hello 太郎 田中, you are 25 years old!"
+- Japanese: "こんにちは 田中 太郎さん、あなたは25歳です！"
+
+### Missing Placeholder Handling
+
+If a placeholder is missing from a locale file, it will be gracefully ignored:
+
+**locale/en.json**
+```json
+{
+  "PARTIAL_MESSAGE": "Hello {firstName}, welcome!"
+}
+```
+
+```tsx
+<TypedMessage 
+  message={messages.PARTIAL_MESSAGE} 
+  params={{ firstName: "John", lastName: "Doe", age: 30 }} 
+/>
+```
+
+Result: "Hello John, welcome!" (unused parameters are ignored)
 
 ## License
 
-MIT License
+MIT License. See [LICENSE](./LICENSE) for details.
 
-## Related Projects
-
-- [React](https://reactjs.org/)
-- [Vite](https://vitejs.dev/)
-- [TypeScript](https://www.typescriptlang.org/)
-
----
-
-**Note**: This library is designed for use in Vite environments. It may not work with other build tools.

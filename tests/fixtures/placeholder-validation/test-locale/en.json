@@ -1,0 +1,7 @@
+{
+  "WELCOME_USER": "Welcome {firstName} {lastName}! Age: {age:number}",
+  "ITEM_COUNT": "You have {count:number} {itemType} in your cart",
+  "MIXED_TYPES": "User {userId:number} has {balance:number} points and status {isActive:boolean}",
+  "PARTIAL_TYPES": "Order {orderId:number} for {amount:number} dollars is {status}",
+  "TYPE_CONFLICT_TEST": "Value: {value:number}, Count: {count:boolean}"
+} 

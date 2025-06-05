@@ -1,0 +1,7 @@
+{
+  "WELCOME_USER": "Hello {firstName} {lastName}, you are {age:number} years old!",
+  "ITEM_COUNT": "You have {count:number} {itemType}",
+  "MIXED_TYPES": "User {userId} has {balance:number} points and status {isActive:boolean}",
+  "PARTIAL_TYPES": "Order {orderId} for {amount} dollars is {status}",
+  "TYPE_CONFLICT_TEST": "Value: {value:string}, Count: {count:number}"
+} 

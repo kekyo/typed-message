@@ -1,6 +1,6 @@
 {
   "name": "typed-message",
-  "version": "0.4.2",
+  "version": "0.5.5",
   "type": "module",
   "description": "A TypeScript and React library for providing type-safe internationalization messages.",
   "main": "dist/index.js",
@@ -24,7 +24,8 @@
   "scripts": {
     "dev": "vite demo",
     "build": "rv --npm . && vite build",
-    "test": "vitest --run",
+    "test": "npm run build && npm run test:run",
+    "test:run": "vitest --run",
     "test:coverage": "vitest --coverage --run"
   },
   "keywords": [

@@ -20,19 +20,19 @@ import type { SimpleMessageItem, MessageItem } from './types';
  * // Parameterized message - TypeScript ensures type safety
  * <TypedMessage 
  *   message={messages.WELCOME_USER} 
- *   params={["John", "Doe", 25]} 
+ *   params={{ firstName: "John", lastName: "Doe", age: 25 }} 
  * />
  * ```
  */
-// Integrated TypedMessage - ensures type safety with overloads
+// Function overloads for TypedMessage
 export function TypedMessage(props: { message: SimpleMessageItem }): React.ReactElement;
-export function TypedMessage<T extends readonly [any, ...any[]]>(props: { 
+export function TypedMessage<T extends Record<string, any>>(props: { 
   message: MessageItem<T>; 
-  params: T 
+  params: T; 
 }): React.ReactElement;
-export function TypedMessage<T extends readonly [any, ...any[]]>(props: {
-  message: SimpleMessageItem | MessageItem<T>;
-  params?: T;
+export function TypedMessage<T extends Record<string, any>>(props: { 
+  message: SimpleMessageItem | MessageItem<T>; 
+  params?: T; 
 }): React.ReactElement {
   const getMessage = useTypedMessage();
   

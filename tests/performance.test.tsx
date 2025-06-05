@@ -11,9 +11,9 @@ const simpleMessage: SimpleMessageItem = {
   fallback: 'Simple message',
 };
 
-const paramMessage: MessageItem<readonly [count: number, name: string]> = {
+const paramMessage: MessageItem<{ count: number; name: string }> = {
   key: 'PARAM_MSG',
-  fallback: (count: number, name: string) => `You have ${count} ${name}`,
+  fallback: 'You have {count} {name}',
 };
 
 // Component that counts render times
@@ -37,8 +37,8 @@ const RenderCounterComponent: React.FC<{
 
 // Render count test for parameterized messages
 const ParamRenderCounterComponent: React.FC<{
-  message: MessageItem<readonly [count: number, name: string]>;
-  params: readonly [count: number, name: string];
+  message: MessageItem<{ count: number; name: string }>;
+  params: { count: number; name: string };
   onRender: () => void;
 }> = ({ message, params, onRender }) => {
   const renderCountRef = useRef(0);
@@ -57,7 +57,7 @@ const ParamRenderCounterComponent: React.FC<{
 // Parent component re-render test
 const ParentReRenderComponent: React.FC = () => {
   const [counter, setCounter] = useState(0);
-  const [messageParams, setMessageParams] = useState<readonly [number, string]>([5, 'apples']);
+  const [messageParams, setMessageParams] = useState<{ count: number; name: string }>({ count: 5, name: 'apples' });
   const renderCallCount = useRef(0);
   const paramRenderCallCount = useRef(0);
 
@@ -95,14 +95,14 @@ const ParentReRenderComponent: React.FC = () => {
       
       <button
         data-testid="change-params"
-        onClick={() => setMessageParams([3, 'oranges'])}
+        onClick={() => setMessageParams({ count: 3, name: 'oranges' })}
       >
         Change Parameters
       </button>
       
       <button
         data-testid="same-params"
-        onClick={() => setMessageParams([3, 'oranges'])}
+        onClick={() => setMessageParams({ count: 3, name: 'oranges' })}
       >
         Set Same Parameters
       </button>
@@ -201,26 +201,36 @@ describe('TypedMessage performance tests', () => {
   });
 
   it('messages dictionary changes are recalculated appropriately', () => {
-    const { rerender } = render(
-      <TypedMessageProvider messages={testMessages}>
-        <TypedMessage message={simpleMessage} />
-      </TypedMessageProvider>
-    );
+    const TestComponent: React.FC = () => {
+      const [messages, setMessages] = useState(testMessages);
+      
+      return (
+        <TypedMessageProvider messages={messages}>
+          <div>
+            <TypedMessage message={simpleMessage} />
+            <button
+              data-testid="change-messages"
+              onClick={() => setMessages({
+                SIMPLE_MSG: 'Updated simple message',
+                PARAM_MSG: 'Updated param message',
+              })}
+            >
+              Change Messages
+            </button>
+          </div>
+        </TypedMessageProvider>
+      );
+    };
+
+    render(<TestComponent />);
 
     expect(screen.getByText('Custom simple message')).toBeDefined();
 
-    // Change messages dictionary
-    const updatedMessages = {
-      SIMPLE_MSG: 'Updated message',
-    };
+    act(() => {
+      screen.getByTestId('change-messages').click();
+    });
 
-    rerender(
-      <TypedMessageProvider messages={updatedMessages}>
-        <TypedMessage message={simpleMessage} />
-      </TypedMessageProvider>
-    );
-
-    expect(screen.getByText('Updated message')).toBeDefined();
+    expect(screen.getByText('Updated simple message')).toBeDefined();
     expect(screen.queryByText('Custom simple message')).toBeNull();
   });
 }); 

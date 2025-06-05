@@ -41,22 +41,20 @@ export const TypedMessageProvider = ({
 };
 
 // Function to replace placeholders
-function replacePlaceholders(template: string, args: readonly any[]): string {
+function replacePlaceholders(template: string, params: Record<string, any>): string {
   // Placeholder regex: {name} or {name:type}
   const placeholderRegex = /\{(\w+)(?::\w+)?\}/g;
-  let argIndex = 0;
   
-  return template.replace(placeholderRegex, (match) => {
-    if (argIndex < args.length) {
-      const value = args[argIndex];
-      argIndex++;
+  return template.replace(placeholderRegex, (match, paramName) => {
+    if (params.hasOwnProperty(paramName)) {
+      const value = params[paramName];
       // Format Date type appropriately
       if (value instanceof Date) {
         return value.toLocaleDateString();
       }
       return String(value);
     }
-    return match; // Return as-is if not enough arguments
+    return match; // Return as-is if parameter not found
   });
 }
 
@@ -71,7 +69,7 @@ function replacePlaceholders(template: string, args: readonly any[]): string {
  * 
  * @returns A getMessage function with two overloads:
  *   - `(messageItem: SimpleMessageItem) => string` - For non-parameterized messages
- *   - `(messageItem: MessageItem<T>, args: T) => string` - For parameterized messages
+ *   - `(messageItem: MessageItem<T>, params: T) => string` - For parameterized messages
  * 
  * @throws {Error} When used outside of TypedMessageProvider context
  * 
@@ -86,7 +84,7 @@ function replacePlaceholders(template: string, args: readonly any[]): string {
  *   return (
  *     <div>
  *       <h1>{getMessage(messages.WELCOME_MESSAGE)}</h1>
- *       <p>{getMessage(messages.WELCOME_USER, ["John", "Doe", 25])}</p>
+ *       <p>{getMessage(messages.WELCOME_USER, { firstName: "John", lastName: "Doe", age: 25 })}</p>
  *     </div>
  *   );
  * };
@@ -103,38 +101,27 @@ export const useTypedMessage = () => {
   // Define the overloaded function type
   type GetMessageFunction = {
     (messageItem: SimpleMessageItem): string;
-    <T extends readonly [any, ...any[]]>(messageItem: MessageItem<T>, args: T): string;
+    <T extends Record<string, any>>(messageItem: MessageItem<T>, params: T): string;
   };
   
   // Memoize the getMessage function using useCallback
   const getMessage = useCallback(
     ((
       messageItem: SimpleMessageItem | MessageItem<any>,
-      args?: any
+      params?: any
     ): string => {
       // 1. Get message from context
       let localizedMessage = messages![messageItem.key];
       
       // 2. Use fallback if no localized message
       if (!localizedMessage) {
-        // For SimpleMessageItem, fallback is a string
-        // For MessageItem, fallback is a function
-        if (typeof messageItem.fallback === 'function') {
-          // MessageItem<T> case
-          if (args) {
-            return (messageItem.fallback as (...args: any) => string)(...args);
-          } else {
-            return (messageItem.fallback as () => string)();
-          }
-        } else {
-          // SimpleMessageItem case
-          localizedMessage = messageItem.fallback;
-        }
+        // Both SimpleMessageItem and MessageItem now use string fallback
+        localizedMessage = messageItem.fallback;
       }
       
       // 3. Placeholder replacement
-      if (args && args.length > 0) {
-        return replacePlaceholders(localizedMessage, args);
+      if (params && typeof params === 'object') {
+        return replacePlaceholders(localizedMessage, params);
       } else {
         return localizedMessage;
       }

@@ -27,14 +27,14 @@ const FormatterDemo: React.FC = () => {
   const [lastName, setLastName] = useState('Doe');
   const [age, setAge] = useState(25);
   const [itemCount, setItemCount] = useState(3);
-  const [itemType, setItemType] = useState('books');
+  const [itemType, setItemType] = useState('items');
 
   return (
     <div className="formatter-demo">
-      <h3>Formatter Functionality Demo</h3>
+      <h3>{getMessage(messages.FEATURES_TITLE)}</h3>
       
       <div className="demo-section">
-        <h4>Parameterized Messages</h4>
+        <h4>User Information</h4>
         <div className="input-group">
           <input 
             type="text" 
@@ -56,9 +56,8 @@ const FormatterDemo: React.FC = () => {
           />
         </div>
         <div className="result">
-          {/* TypeScript type checking works! */}
           <strong>Result: </strong>
-          {getMessage(messages.WELCOME_USER, [firstName, lastName, age])}
+          {getMessage(messages.WELCOME_USER, { firstName, lastName, age })}
         </div>
       </div>
 
@@ -80,7 +79,7 @@ const FormatterDemo: React.FC = () => {
         </div>
         <div className="result">
           <strong>Result: </strong>
-          {getMessage(messages.ITEM_COUNT, [itemCount, itemType])}
+          {getMessage(messages.ITEM_COUNT, { count: itemCount, itemType })}
         </div>
       </div>
 
@@ -88,7 +87,7 @@ const FormatterDemo: React.FC = () => {
         <h4>Date and Temperature</h4>
         <div className="result">
           <strong>Result: </strong>
-          {getMessage(messages.FORMATTED_DATE, [new Date(), 23])}
+          {getMessage(messages.FORMATTED_DATE, { date: new Date(), temperature: 23 })}
         </div>
       </div>
 
@@ -97,7 +96,7 @@ const FormatterDemo: React.FC = () => {
         <div className="result">
           <TypedMessage 
             message={messages.WELCOME_USER} 
-            params={[firstName, lastName, age]} 
+            params={{ firstName, lastName, age }} 
           />
         </div>
       </div>
@@ -148,7 +147,7 @@ const FallbackDemo: React.FC = () => {
           <strong>Result: </strong>
           <TypedMessage 
             message={messages.FALLBACK_ONLY_DEMO} 
-            params={[demoValue, demoStatus]} 
+            params={{ value: demoValue, status: demoStatus }} 
           />
         </div>
       </div>

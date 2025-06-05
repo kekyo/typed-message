@@ -1,0 +1,7 @@
+{
+  "WELCOME_USER": "こんにちは {firstName} {lastName}さん、{age:number}歳ですね",
+  "ITEM_COUNT": "カートに{count:number}個の{itemType}があります",
+  "MIXED_TYPES": "ユーザー{userId:boolean}の残高は{balance:string}ポイント、ステータスは{isActive:number}です",
+  "PARTIAL_TYPES": "注文{orderId}の金額は{amount:number}ドル、ステータス：{status:string}",
+  "TYPE_CONFLICT_TEST": "Value: {value:boolean}, Count: {count:date}"
+} 

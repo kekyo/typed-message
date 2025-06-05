@@ -61,11 +61,23 @@ interface AggregatedMessages {
   [key: string]: ParsedMessage;
 }
 
+// Type to store placeholder type inconsistency information
+interface PlaceholderTypeConflict {
+  parameterName: string;
+  conflicts: { localeFile: string; type: string }[];
+}
+
+// Type that stores warning information for each message key
+interface MessageWarning {
+  key: string;
+  conflicts: PlaceholderTypeConflict[];
+}
+
 // Regular expression for placeholder analysis
 const PLACEHOLDER_REGEX = /\{(\w+)(?::(\w+))?\}/g;
 
 // Function to parse placeholders
-function parsePlaceholders(message: string): PlaceholderInfo[] {
+const parsePlaceholders = (message: string): PlaceholderInfo[] => {
   const placeholders: PlaceholderInfo[] = [];
   let match;
   let position = 0;
@@ -85,7 +97,7 @@ function parsePlaceholders(message: string): PlaceholderInfo[] {
 }
 
 // Parse message and generate PlaceholderInfo
-function parseMessage(key: string, messageData: string, fallback: string): ParsedMessage {
+const parseMessage = (key: string, messageData: string, fallback: string): ParsedMessage => {
   const placeholders = parsePlaceholders(messageData);
   return {
     key,
@@ -96,12 +108,12 @@ function parseMessage(key: string, messageData: string, fallback: string): Parse
 }
 
 // Generate TypeScript named tuple type string
-function generateNamedTupleTypeString(placeholders: PlaceholderInfo[]): string {
+const generateObjectTypeString = (placeholders: PlaceholderInfo[]): string => {
   if (placeholders.length === 0) {
-    return 'readonly []';
+    return '{}';
   }
   
-  const namedTypes = placeholders.map(p => {
+  const objectProperties = placeholders.map(p => {
     const tsType = (() => {
       switch (p.type) {
         case 'number': return 'number';
@@ -113,35 +125,128 @@ function generateNamedTupleTypeString(placeholders: PlaceholderInfo[]): string {
     return `${p.name}: ${tsType}`;
   });
   
-  return `readonly [${namedTypes.join(', ')}]`;
+  return `{ ${objectProperties.join('; ')} }`;
 }
 
-// Generate formatter function
-function generateFormatter(template: string, placeholders: PlaceholderInfo[]): string {
-  if (placeholders.length === 0) {
-    return `() => \`${template.replace(/`/g, '\\`')}\``;
+// Function to check placeholder type consistency across locales
+const checkPlaceholderTypeConsistency = (
+  localeFiles: string[], 
+  localeDir: string
+): { aggregatedMessages: AggregatedMessages; warnings: MessageWarning[]; invalidFiles: string[] } => {
+  // Analyze messages in each locale file individually
+  const localeMessages: { [localeFile: string]: { [key: string]: ParsedMessage } } = {};
+  const allMessageKeys = new Set<string>();
+  const invalidFiles: string[] = [];
+  
+  for (const file of localeFiles) {
+    const filePath = join(localeDir, file);
+    
+    try {
+      const content = readFileSync(filePath, 'utf-8');
+      const localeData: LocaleData = JSON.parse(content);
+      
+      localeMessages[file] = {};
+      
+      Object.entries(localeData).forEach(([key, value]) => {
+        if (typeof value === 'string') {
+          localeMessages[file][key] = parseMessage(key, value, value);
+          allMessageKeys.add(key);
+        }
+      });
+    } catch (error) {
+      console.error(`Error reading locale file ${file}:`, error);
+      // Continue processing even if an error occurs and add to the list of invalid files
+      invalidFiles.push(file);
+      continue;
+    }
   }
   
-  const paramNames = placeholders.map(p => p.name);
-  const paramTypes = placeholders.map(p => {
-    switch (p.type) {
-      case 'number': return 'number';
-      case 'boolean': return 'boolean';
-      case 'date': return 'Date';
-      default: return 'string';
+  // Placeholder type consistency check for each message key
+  const warnings: MessageWarning[] = [];
+  const aggregatedMessages: AggregatedMessages = {};
+  
+  for (const messageKey of allMessageKeys) {
+    const placeholderTypeMap: { [paramName: string]: { [localeFile: string]: string } } = {};
+    let selectedMessage: ParsedMessage | null = null;
+    
+    // Select final messages according to priority order
+    for (let i = localeFiles.length - 1; i >= 0; i--) {
+      const file = localeFiles[i];
+      if (localeMessages[file] && localeMessages[file][messageKey]) {
+        selectedMessage = localeMessages[file][messageKey];
+        break;
+      }
     }
-  });
+    
+    if (!selectedMessage) continue;
+    
+    // Collect placeholder types in each locale file
+    for (const file of localeFiles) {
+      const message = localeMessages[file] && localeMessages[file][messageKey];
+      if (message) {
+        for (const placeholder of message.placeholders) {
+          if (!placeholderTypeMap[placeholder.name]) {
+            placeholderTypeMap[placeholder.name] = {};
+          }
+          placeholderTypeMap[placeholder.name][file] = placeholder.type;
+        }
+      }
+    }
+    
+    // Placeholder type integrity checks
+    const conflicts: PlaceholderTypeConflict[] = [];
+    
+    for (const [paramName, typesByFile] of Object.entries(placeholderTypeMap)) {
+      const uniqueTypes = [...new Set(Object.values(typesByFile))];
+      
+      // Inconsistency if more than one type exists (including combinations of string and explicit types)
+      if (uniqueTypes.length > 1) {
+        conflicts.push({
+          parameterName: paramName,
+          conflicts: Object.entries(typesByFile).map(([file, type]) => ({ localeFile: file, type }))
+        });
+      }
+    }
+    
+    if (conflicts.length > 0) {
+      warnings.push({ key: messageKey, conflicts });
+    }
+    
+    // Determine final type (preference given to explicit types)
+    const finalPlaceholders = selectedMessage.placeholders.map(placeholder => {
+      const typesByFile = placeholderTypeMap[placeholder.name];
+      if (typesByFile) {
+        // Use an explicit type other than 'string' if available
+        const explicitTypes = Object.values(typesByFile).filter(type => type !== 'string');
+        if (explicitTypes.length > 0) {
+          return { ...placeholder, type: explicitTypes[0] as PlaceholderInfo['type'] };
+        }
+      }
+      return placeholder;
+    });
+    
+    aggregatedMessages[messageKey] = {
+      ...selectedMessage,
+      placeholders: finalPlaceholders
+    };
+  }
   
-  const params = paramNames.map((name, i) => `${name}: ${paramTypes[i]}`).join(', ');
+  return { aggregatedMessages, warnings, invalidFiles };
+}
+
+// Function to generate JSDoc comments for warnings
+const generateWarningJSDoc = (warning: MessageWarning): string => {
+  const conflictDescriptions = warning.conflicts.map(conflict => {
+    const conflictDetails = conflict.conflicts
+      .map(c => `${c.localeFile}: ${c.type}`)
+      .join(', ');
+    return `   * - ${conflict.parameterName}: ${conflictDetails}`;
+  }).join('\n');
   
-  // Create template string (replace placeholders with ${variableName})
-  let formattedTemplate = template;
-  placeholders.forEach(placeholder => {
-    const regex = new RegExp(`\\{${placeholder.name}(?::\\w+)?\\}`, 'g');
-    formattedTemplate = formattedTemplate.replace(regex, `\${${placeholder.name}}`);
-  });
-  
-  return `(${params}) => \`${formattedTemplate.replace(/`/g, '\\`')}\``;
+  return `  /**
+   * Warning: Placeholder types do not match across locales
+${conflictDescriptions}
+   */`;
 }
 
 /**
@@ -204,7 +309,7 @@ export const typedMessagePlugin = (options: TypedMessagePluginOptions = {}): Plu
 };
 
 // Message file generation function
-function generateMessageFile(options: Required<TypedMessagePluginOptions>, rootDir: string) {
+const generateMessageFile = (options: Required<TypedMessagePluginOptions>, rootDir: string) => {
   try {
     const localeDir = resolve(rootDir, options.localeDir);
     const outputPath = resolve(rootDir, options.outputPath);
@@ -217,10 +322,10 @@ function generateMessageFile(options: Required<TypedMessagePluginOptions>, rootD
 
     // Read JSON files
     const localeFiles = getLocaleFiles(localeDir, options.fallbackPriorityOrder);
-    const aggregatedMessages = aggregateMessages(localeFiles, localeDir);
+    const { aggregatedMessages, warnings, invalidFiles } = checkPlaceholderTypeConsistency(localeFiles, localeDir);
     
     // Generate TypeScript code
-    const tsCode = generateTypeScriptCode(aggregatedMessages);
+    const tsCode = generateTypeScriptCode(aggregatedMessages, warnings, invalidFiles);
     
     // Create output directory
     const outputDir = dirname(outputPath);
@@ -232,13 +337,25 @@ function generateMessageFile(options: Required<TypedMessagePluginOptions>, rootD
     writeFileSync(outputPath, tsCode, 'utf-8');
     
     console.log(`Generated typed messages: ${outputPath} (${Object.keys(aggregatedMessages).length} keys)`);
+    
+    // Warnings in logs
+    if (warnings.length > 0) {
+      console.warn(`Placeholder type mismatches detected in ${warnings.length} message(s):`);
+      warnings.forEach(warning => {
+        console.warn(`  - ${warning.key}: ${warning.conflicts.map(c => c.parameterName).join(', ')}`);
+      });
+    }
+
+    if (invalidFiles.length > 0) {
+      console.warn(`${invalidFiles.length} invalid JSON file(s) detected:`, invalidFiles);
+    }
   } catch (error) {
     console.error('Error generating message file:', error);
   }
 }
 
 // Get locale file list
-function getLocaleFiles(localeDir: string, fallbackPriorityOrder: string[]): string[] {
+const getLocaleFiles = (localeDir: string, fallbackPriorityOrder: string[]): string[] => {
   if (!existsSync(localeDir)) {
     return [];
   }
@@ -279,79 +396,52 @@ function getLocaleFiles(localeDir: string, fallbackPriorityOrder: string[]): str
     });
 }
 
-// Message aggregation
-function aggregateMessages(localeFiles: string[], localeDir: string): AggregatedMessages {
-  const aggregated: { [key: string]: string } = {};
-  
-  // Process files according to priority (last element has highest priority)
-  // Process sorted array in forward order so last element is merged last
-  for (let i = 0; i < localeFiles.length; i++) {
-    const file = localeFiles[i];
-    const filePath = join(localeDir, file);
-    
-    try {
-      const content = readFileSync(filePath, 'utf-8');
-      const localeData: LocaleData = JSON.parse(content);
-      
-      // Extract only string values
-      const stringData: { [key: string]: string } = {};
-      Object.entries(localeData).forEach(([key, value]) => {
-        if (typeof value === 'string') {
-          stringData[key] = value;
-        }
-      });
-      
-      // Later merged files overwrite
-      Object.assign(aggregated, stringData);
-      
-      console.log(`Loaded locale file: ${file} (${Object.keys(stringData).length} keys)`);
-    } catch (error) {
-      console.error(`Error reading locale file ${file}:`, error);
-    }
-  }
-  
-  // Convert to ParsedMessage format
-  const result: AggregatedMessages = {};
-  Object.entries(aggregated).forEach(([key, fallback]) => {
-    result[key] = parseMessage(key, fallback, fallback);
-  });
-  
-  return result;
-}
-
 // TypeScript code generation
-function generateTypeScriptCode(messages: AggregatedMessages): string {
+const generateTypeScriptCode = (messages: AggregatedMessages, warnings: MessageWarning[], invalidFiles: string[]): string => {
   const entries = Object.entries(messages);
+  const warningMap = new Map(warnings.map(w => [w.key, w]));
   
   const messageItems = entries
     .map(([key, message]) => {
       const escapedKey = JSON.stringify(key);
+      const warning = warningMap.get(key);
+      const warningComment = warning ? generateWarningJSDoc(warning) : '';
       
       if (message.placeholders.length === 0) {
         // SimpleMessageItem for non-parameterized messages
         const escapedFallback = JSON.stringify(message.fallback);
-        return `  ${key}: { 
+        return `${warningComment}${warningComment ? '\n' : ''}  ${key}: { 
     key: ${escapedKey}, 
     fallback: ${escapedFallback} 
   } as SimpleMessageItem`;
       } else {
-        // MessageItem for parameterized messages - use formatter as fallback
-        const formatter = generateFormatter(message.template, message.placeholders);
-        const typeString = generateNamedTupleTypeString(message.placeholders);
-        return `  ${key}: { 
+        // MessageItem for parameterized messages - use template string as fallback
+        const escapedFallback = JSON.stringify(message.fallback);
+        const typeString = generateObjectTypeString(message.placeholders);
+        return `${warningComment}${warningComment ? '\n' : ''}  ${key}: { 
     key: ${escapedKey}, 
-    fallback: ${formatter} 
+    fallback: ${escapedFallback} 
   } as MessageItem<${typeString}>`;
       }
     })
     .join(',\n');
+
+  // Generate JSDoc comments in case of invalid files
+  const invalidFilesComment = invalidFiles.length > 0 
+    ? `/**
+ * Warning: Failed to load the following locale files
+ * ${invalidFiles.map(file => ` * - ${file}`).join('\n')}
+ * These files are not included in the generated code.
+ */
+`
+    : '';
 
   return `// This file is auto-generated by typed-message plugin
 // Do not edit manually
 
 import type { MessageItem, SimpleMessageItem } from 'typed-message';
 
-export const messages = {
+${invalidFilesComment}export const messages = {
 ${messageItems}
 } as const;
 `;
