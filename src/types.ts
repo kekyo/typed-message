@@ -26,24 +26,21 @@ export interface SimpleMessageItem {
  * counts, dates, etc. The generic type T ensures type safety for the parameters
  * passed to the formatter function.
  * 
- * @template T - A readonly tuple type representing the parameters required for this message
+ * @template T - An object type representing the parameters required for this message
  * 
  * @example
  * ```typescript
- * const paramMessage: MessageItem<readonly [string, number]> = {
+ * const paramMessage: MessageItem<{ name: string; age: number }> = {
  *   key: "WELCOME_USER",
- *   fallback: (name: string, age: number) => `Hello ${name}, you are ${age} years old!`,
- *   paramNames: ["name", "age"]
+ *   fallback: ({ name, age }) => `Hello ${name}, you are ${age} years old!`
  * };
  * ```
  */
-export interface MessageItem<T extends readonly [any, ...any[]]> {
+export interface MessageItem<T extends Record<string, any>> {
   /** The key to search for in the message dictionary */
   key: string;
-  /** A function that takes parameters and returns a formatted string as fallback */
-  fallback: (...args: T) => string;
-  /** Optional array of parameter names for name-based placeholder replacement */
-  paramNames?: readonly string[];
+  /** A function that takes parameters object and returns a formatted string as fallback */
+  fallback: (params: T) => string;
 }
 
 /**
@@ -93,18 +90,18 @@ export interface TypedMessageProviderProps {
 /**
  * Type helper for formatter functions
  * 
- * Represents a function that takes a variable number of arguments and returns
+ * Represents a function that takes an object with parameters and returns
  * a formatted string. Used internally for message formatting with parameters.
  * 
- * @template T - A tuple type representing the function parameters
+ * @template T - An object type representing the function parameters
  * 
  * @example
  * ```typescript
- * const formatter: FormatterFunction<[string, number]> = (name, age) => 
+ * const formatter: FormatterFunction<{ name: string; age: number }> = ({ name, age }) => 
  *   `Hello ${name}, you are ${age} years old!`;
  * ```
  */
-export type FormatterFunction<T extends readonly [...any[]]> = (...args: T) => string;
+export type FormatterFunction<T extends Record<string, any>> = (params: T) => string;
 
 /**
  * Type for placeholder analysis results

@@ -96,12 +96,12 @@ function parseMessage(key: string, messageData: string, fallback: string): Parse
 }
 
 // Generate TypeScript named tuple type string
-function generateNamedTupleTypeString(placeholders: PlaceholderInfo[]): string {
+function generateObjectTypeString(placeholders: PlaceholderInfo[]): string {
   if (placeholders.length === 0) {
-    return 'readonly []';
+    return '{}';
   }
   
-  const namedTypes = placeholders.map(p => {
+  const objectProperties = placeholders.map(p => {
     const tsType = (() => {
       switch (p.type) {
         case 'number': return 'number';
@@ -113,7 +113,7 @@ function generateNamedTupleTypeString(placeholders: PlaceholderInfo[]): string {
     return `${p.name}: ${tsType}`;
   });
   
-  return `readonly [${namedTypes.join(', ')}]`;
+  return `{ ${objectProperties.join('; ')} }`;
 }
 
 // Generate formatter function
@@ -132,7 +132,8 @@ function generateFormatter(template: string, placeholders: PlaceholderInfo[]): s
     }
   });
   
-  const params = paramNames.map((name, i) => `${name}: ${paramTypes[i]}`).join(', ');
+  const objectType = paramNames.map((name, i) => `${name}: ${paramTypes[i]}`).join(', ');
+  const paramNamesOnly = paramNames.join(', ');
   
   // Create template string (replace placeholders with ${variableName})
   let formattedTemplate = template;
@@ -141,7 +142,7 @@ function generateFormatter(template: string, placeholders: PlaceholderInfo[]): s
     formattedTemplate = formattedTemplate.replace(regex, `\${${placeholder.name}}`);
   });
   
-  return `(${params}) => \`${formattedTemplate.replace(/`/g, '\\`')}\``;
+  return `({ ${paramNamesOnly} }: { ${objectType} }) => \`${formattedTemplate.replace(/`/g, '\\`')}\``;
 }
 
 /**
@@ -337,7 +338,7 @@ function generateTypeScriptCode(messages: AggregatedMessages): string {
       } else {
         // MessageItem for parameterized messages - use formatter as fallback
         const formatter = generateFormatter(message.template, message.placeholders);
-        const typeString = generateNamedTupleTypeString(message.placeholders);
+        const typeString = generateObjectTypeString(message.placeholders);
         return `  ${key}: { 
     key: ${escapedKey}, 
     fallback: ${formatter} 

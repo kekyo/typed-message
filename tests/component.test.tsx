@@ -17,9 +17,9 @@ const titleMessage: SimpleMessageItem = {
 };
 
 // Parameterized message item
-const paramMessage: MessageItem<readonly [count: number, name: string]> = {
+const paramMessage: MessageItem<{ count: number; name: string }> = {
   key: 'PARAM_MESSAGE',
-  fallback: (count: number, name: string) => `You have ${count} ${name}`,
+  fallback: ({ count, name }) => `You have ${count} ${name}`,
 };
 
 describe('TypedMessage - SimpleMessageItem', () => {
@@ -111,7 +111,7 @@ describe('TypedMessage - MessageItem integrated version', () => {
       <TypedMessageProvider messages={messages}>
         <TypedMessage 
           message={paramMessage} 
-          params={[5, 'apples']} 
+          params={{ count: 5, name: 'apples' }} 
         />
       </TypedMessageProvider>
     );
@@ -124,7 +124,7 @@ describe('TypedMessage - MessageItem integrated version', () => {
       <TypedMessageProvider messages={{}}>
         <TypedMessage 
           message={paramMessage} 
-          params={[3, 'oranges']} 
+          params={{ count: 3, name: 'oranges' }} 
         />
       </TypedMessageProvider>
     );
@@ -133,9 +133,9 @@ describe('TypedMessage - MessageItem integrated version', () => {
   });
 
   it('handles multiple parameters correctly in integrated TypedMessage', () => {
-    const userMessage: MessageItem<readonly [firstName: string, lastName: string, age: number]> = {
+    const userMessage: MessageItem<{ firstName: string; lastName: string; age: number }> = {
       key: 'USER_MESSAGE',
-      fallback: (firstName: string, lastName: string, age: number) => 
+      fallback: ({ firstName, lastName, age }) => 
         `Hello ${firstName} ${lastName}, you are ${age} years old`,
     };
 
@@ -147,7 +147,7 @@ describe('TypedMessage - MessageItem integrated version', () => {
       <TypedMessageProvider messages={messages}>
         <TypedMessage 
           message={userMessage} 
-          params={['Taro', 'Tanaka', 25]} 
+          params={{ firstName: 'Taro', lastName: 'Tanaka', age: 25 }} 
         />
       </TypedMessageProvider>
     );
@@ -162,7 +162,7 @@ describe('TypedMessage - MessageItem integrated version', () => {
       <TypedMessageProvider messages={{}}>
         <TypedMessage message={testMessage} />
         {/* The following would cause TypeScript error:
-        <TypedMessage message={testMessage} params={['test']} />
+        <TypedMessage message={testMessage} params={{ test: 'value' }} />
         */}
       </TypedMessageProvider>
     );
@@ -179,7 +179,7 @@ describe('TypedMessage - MessageItem integrated version', () => {
       <TypedMessageProvider messages={messages}>
         <TypedMessage 
           message={paramMessage} 
-          params={[10, 'bananas']} 
+          params={{ count: 10, name: 'bananas' }} 
         />
         {/* The following would cause TypeScript error:
         <TypedMessage message={paramMessage} />
