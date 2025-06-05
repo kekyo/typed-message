@@ -32,15 +32,16 @@ export interface SimpleMessageItem {
  * ```typescript
  * const paramMessage: MessageItem<{ name: string; age: number }> = {
  *   key: "WELCOME_USER",
- *   fallback: ({ name, age }) => `Hello ${name}, you are ${age} years old!`
+ *   fallback: "Hello {name}, you are {age:number} years old!"
  * };
  * ```
  */
+// @ts-ignore: T is used for type safety in getMessage function calls
 export interface MessageItem<T extends Record<string, any>> {
   /** The key to search for in the message dictionary */
   key: string;
-  /** A function that takes parameters object and returns a formatted string as fallback */
-  fallback: (params: T) => string;
+  /** The fallback message template with placeholder syntax */
+  fallback: string;
 }
 
 /**

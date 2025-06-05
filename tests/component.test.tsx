@@ -19,7 +19,7 @@ const titleMessage: SimpleMessageItem = {
 // Parameterized message item
 const paramMessage: MessageItem<{ count: number; name: string }> = {
   key: 'PARAM_MESSAGE',
-  fallback: ({ count, name }) => `You have ${count} ${name}`,
+  fallback: 'You have {count:number} {name}',
 };
 
 describe('TypedMessage - SimpleMessageItem', () => {
@@ -135,8 +135,7 @@ describe('TypedMessage - MessageItem integrated version', () => {
   it('handles multiple parameters correctly in integrated TypedMessage', () => {
     const userMessage: MessageItem<{ firstName: string; lastName: string; age: number }> = {
       key: 'USER_MESSAGE',
-      fallback: ({ firstName, lastName, age }) => 
-        `Hello ${firstName} ${lastName}, you are ${age} years old`,
+      fallback: 'Hello {firstName} {lastName}, you are {age:number} years old',
     };
 
     const messages = {

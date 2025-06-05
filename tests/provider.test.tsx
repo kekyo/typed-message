@@ -14,7 +14,7 @@ const TestComponent: React.FC = () => {
 // Error test component
 const ErrorTestComponent: React.FC = () => {
   const getMessage = useTypedMessage();
-  return <div>Should error</div>;
+  return <div>This should throw an error</div>;
 };
 
 // Fallback test component
@@ -29,7 +29,7 @@ const PlaceholderTestComponent: React.FC = () => {
   const getMessage = useTypedMessage();
   const testMessage: MessageItem<{ count: number; name: string }> = { 
     key: 'PLACEHOLDER_KEY', 
-    fallback: ({ count, name }) => `You have ${count} ${name}`
+    fallback: 'You have {count:number} {name}'
   };
   const result = getMessage(testMessage, { count: 5, name: 'apples' });
   return <div data-testid="placeholder-message">{result}</div>;
@@ -40,7 +40,7 @@ const ParameterizedFallbackTestComponent: React.FC = () => {
   const getMessage = useTypedMessage();
   const testMessage: MessageItem<{ firstName: string; lastName: string }> = { 
     key: 'PARAM_FALLBACK_KEY', 
-    fallback: ({ firstName, lastName }) => `Hello ${firstName} ${lastName}`
+    fallback: 'Hello {firstName} {lastName}'
   };
   const result = getMessage(testMessage, { firstName: 'John', lastName: 'Doe' });
   return <div data-testid="param-fallback-message">{result}</div>;
@@ -115,7 +115,7 @@ describe('TypedMessageProvider', () => {
       const getMessage = useTypedMessage();
       const testMessage: MessageItem<{ date: Date }> = { 
         key: 'DATE_KEY', 
-        fallback: ({ date }) => `Today is ${date.toLocaleDateString()}`
+        fallback: 'Today is {date:date}'
       };
       const testDate = new Date('2024-01-01');
       const result = getMessage(testMessage, { date: testDate });
@@ -162,7 +162,7 @@ describe('TypedMessageProvider', () => {
       const getMessage = useTypedMessage();
       const testMessage: MessageItem<{ firstName: string; lastName: string; age: number }> = { 
         key: 'PLACEHOLDER_ORDER_KEY', 
-        fallback: ({ firstName, lastName, age }) => `Hello ${firstName} ${lastName}, you are ${age} years old`
+        fallback: 'Hello {firstName} {lastName}, you are {age:number} years old'
       };
       const result = getMessage(testMessage, { firstName: '太郎', lastName: '田中', age: 25 });
       return <div data-testid="placeholder-order-message">{result}</div>;
@@ -188,7 +188,7 @@ describe('TypedMessageProvider', () => {
       const getMessage = useTypedMessage();
       const testMessage: MessageItem<{ firstName: string; lastName: string; age: number }> = { 
         key: 'PLACEHOLDER_ORDER_KEY', 
-        fallback: ({ firstName, lastName, age }) => `Hello ${firstName} ${lastName}, you are ${age} years old`
+        fallback: 'Hello {firstName} {lastName}, you are {age:number} years old'
       };
       const result = getMessage(testMessage, { firstName: '太郎', lastName: '田中', age: 25 });
       return <div data-testid="placeholder-order-message">{result}</div>;
@@ -214,7 +214,7 @@ describe('TypedMessageProvider', () => {
       const getMessage = useTypedMessage();
       const testMessage: MessageItem<{ firstName: string; lastName: string; age: number }> = { 
         key: 'MISSING_PLACEHOLDER_KEY', 
-        fallback: ({ firstName, lastName, age }) => `Hello ${firstName} ${lastName}, you are ${age} years old`
+        fallback: 'Hello {firstName} {lastName}, you are {age:number} years old'
       };
       const result = getMessage(testMessage, { firstName: '太郎', lastName: '田中', age: 25 });
       return <div data-testid="missing-placeholder-message">{result}</div>;

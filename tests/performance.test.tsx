@@ -13,7 +13,7 @@ const simpleMessage: SimpleMessageItem = {
 
 const paramMessage: MessageItem<{ count: number; name: string }> = {
   key: 'PARAM_MSG',
-  fallback: ({ count, name }) => `You have ${count} ${name}`,
+  fallback: 'You have {count} {name}',
 };
 
 // Component that counts render times

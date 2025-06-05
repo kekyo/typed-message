@@ -360,16 +360,16 @@ interface SimpleMessageItem {
 ```typescript
 interface MessageItem<T extends Record<string, any>> {
   key: string;
-  fallback: (params: T) => string;
+  fallback: string;
 }
 ```
 
 - `key`: Key to search in the locale dictionary
-- `fallback`: Function that takes parameter object and returns a formatted string
+- `fallback`: The fallback message template with placeholder syntax
 
 ### useTypedMessage
 
-A hook to get the message retrieval function from TypedMessageProvider. This function takes message items, searches for messages in the dictionary, and uses the fallback function when not found.
+A hook to get the message retrieval function from TypedMessageProvider. This function takes message items, searches for messages in the dictionary, and uses the fallback template when not found.
 
 ```typescript
 const getMessage = useTypedMessage()
@@ -428,7 +428,7 @@ When the same placeholder name is used with different types across locale files,
  */
 USER_MESSAGE: {
   key: "USER_MESSAGE",
-  fallback: ({ userId, balance, isActive }: { userId: number, balance: number, isActive: boolean }) => `...`
+  fallback: "User {userId:number} has {balance:number} points and status {isActive:boolean}"
 } as MessageItem<{ userId: number; balance: number; isActive: boolean }>
 ```
 

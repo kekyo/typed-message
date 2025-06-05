@@ -115,19 +115,8 @@ export const useTypedMessage = () => {
       
       // 2. Use fallback if no localized message
       if (!localizedMessage) {
-        // For SimpleMessageItem, fallback is a string
-        // For MessageItem, fallback is a function
-        if (typeof messageItem.fallback === 'function') {
-          // MessageItem<T> case
-          if (params) {
-            return (messageItem.fallback as (params: any) => string)(params);
-          } else {
-            return (messageItem.fallback as () => string)();
-          }
-        } else {
-          // SimpleMessageItem case
-          localizedMessage = messageItem.fallback;
-        }
+        // Both SimpleMessageItem and MessageItem now use string fallback
+        localizedMessage = messageItem.fallback;
       }
       
       // 3. Placeholder replacement

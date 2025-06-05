@@ -128,35 +128,6 @@ const generateObjectTypeString = (placeholders: PlaceholderInfo[]): string => {
   return `{ ${objectProperties.join('; ')} }`;
 }
 
-// Generate formatter function
-const generateFormatter = (template: string, placeholders: PlaceholderInfo[]): string =>{
-  if (placeholders.length === 0) {
-    return `() => \`${template.replace(/`/g, '\\`')}\``;
-  }
-  
-  const paramNames = placeholders.map(p => p.name);
-  const paramTypes = placeholders.map(p => {
-    switch (p.type) {
-      case 'number': return 'number';
-      case 'boolean': return 'boolean';
-      case 'date': return 'Date';
-      default: return 'string';
-    }
-  });
-  
-  const objectType = paramNames.map((name, i) => `${name}: ${paramTypes[i]}`).join(', ');
-  const paramNamesOnly = paramNames.join(', ');
-  
-  // Create template string (replace placeholders with ${variableName})
-  let formattedTemplate = template;
-  placeholders.forEach(placeholder => {
-    const regex = new RegExp(`\\{${placeholder.name}(?::\\w+)?\\}`, 'g');
-    formattedTemplate = formattedTemplate.replace(regex, `\${${placeholder.name}}`);
-  });
-  
-  return `({ ${paramNamesOnly} }: { ${objectType} }) => \`${formattedTemplate.replace(/`/g, '\\`')}\``;
-}
-
 // Function to check placeholder type consistency across locales
 const checkPlaceholderTypeConsistency = (
   localeFiles: string[], 
@@ -444,12 +415,12 @@ const generateTypeScriptCode = (messages: AggregatedMessages, warnings: MessageW
     fallback: ${escapedFallback} 
   } as SimpleMessageItem`;
       } else {
-        // MessageItem for parameterized messages - use formatter as fallback
-        const formatter = generateFormatter(message.template, message.placeholders);
+        // MessageItem for parameterized messages - use template string as fallback
+        const escapedFallback = JSON.stringify(message.fallback);
         const typeString = generateObjectTypeString(message.placeholders);
         return `${warningComment}${warningComment ? '\n' : ''}  ${key}: { 
     key: ${escapedKey}, 
-    fallback: ${formatter} 
+    fallback: ${escapedFallback} 
   } as MessageItem<${typeString}>`;
       }
     })

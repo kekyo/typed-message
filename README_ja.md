@@ -360,16 +360,16 @@ interface SimpleMessageItem {
 ```typescript
 interface MessageItem<T extends Record<string, any>> {
   key: string;
-  fallback: (params: T) => string;
+  fallback: string;
 }
 ```
 
 - `key`: ロケール辞書で検索するキー
-- `fallback`: パラメータオブジェクトを受け取ってフォーマット済み文字列を返す関数
+- `fallback`: プレースホルダー構文を含むフォールバックメッセージテンプレート
 
 ### useTypedMessage
 
-TypedMessageProviderからメッセージ取得関数を取得するフック。この関数はメッセージアイテムを受け取り、辞書からメッセージを検索して、見つからない場合はfallback関数を使用します。
+TypedMessageProviderからメッセージ取得関数を取得するフック。この関数はメッセージアイテムを受け取り、辞書からメッセージを検索して、見つからない場合はfallbackテンプレートを使用します。
 
 ```typescript
 const getMessage = useTypedMessage()
@@ -428,7 +428,7 @@ Viteプラグインは異なるロケールファイル間でプレースホル�
  */
 USER_MESSAGE: {
   key: "USER_MESSAGE",
-  fallback: ({ userId, balance, isActive }: { userId: number, balance: number, isActive: boolean }) => `...`
+  fallback: "User {userId:number} has {balance:number} points and status {isActive:boolean}"
 } as MessageItem<{ userId: number; balance: number; isActive: boolean }>
 ```
 
