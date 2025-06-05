@@ -3,7 +3,7 @@
 TypeScriptとReactでタイプセーフな国際化メッセージを提供するライブラリです。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![npm version](https://badge.fury.io/js/typed-message.svg)](https://badge.fury.io/js/typed-message)
+[![npm version](https://img.shields.io/npm/v/typed-message.svg)](https://github.com/kekyo/typed-message)
 
 [(English language is here.)](./README.md)
 

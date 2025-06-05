@@ -3,7 +3,7 @@
 A TypeScript and React library for providing type-safe internationalized messages.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![npm version](https://badge.fury.io/js/typed-message.svg)](https://badge.fury.io/js/typed-message)
+[![npm version](https://img.shields.io/npm/v/typed-message.svg)](https://www.npmjs.com/package/typed-message)
 
 [(日本語はこちら)](./README_ja.md)
 
