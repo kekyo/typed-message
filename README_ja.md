@@ -151,19 +151,19 @@ const App = () => {
         <p>
           <TypedMessage 
             message={messages.WELCOME_USER} 
-            params={["John", "Doe", 25]} 
+            params={{ firstName: "John", lastName: "Doe", age: 25 }} 
           />
         </p>
         <p>
           <TypedMessage 
             message={messages.ITEM_COUNT} 
-            params={[3, "books"]} 
+            params={{ count: 3, itemType: "books" }} 
           />
         </p>
         <p>
           <TypedMessage 
             message={messages.FORMATTED_DATE} 
-            params={[new Date(), 23]} 
+            params={{ date: new Date(), temp: 23 }} 
           />
         </p>
         
@@ -200,10 +200,10 @@ const MyComponent = () => {
       <h1>{getMessage(messages.WELCOME_MESSAGE)}</h1>
       <button>{getMessage(messages.BUTTON_SUBMIT)}</button>
       
-      {/* パラメータ付きメッセージ - タプル形式で型安全 */}
-      <p>{getMessage(messages.WELCOME_USER, ["Jane", "Smith", 30])}</p>
-      <p>{getMessage(messages.ITEM_COUNT, [5, "apples"])}</p>
-      <p>{getMessage(messages.FORMATTED_DATE, [new Date(), 18])}</p>
+      {/* パラメータ付きメッセージ - 型安全なオブジェクト形式 */}
+      <p>{getMessage(messages.WELCOME_USER, { firstName: "Jane", lastName: "Smith", age: 30 })}</p>
+      <p>{getMessage(messages.ITEM_COUNT, { count: 5, itemType: "apples" })}</p>
+      <p>{getMessage(messages.FORMATTED_DATE, { date: new Date(), temp: 18 })}</p>
     </div>
   )
 }
@@ -268,7 +268,7 @@ export default App
 | プロパティ | 型 | 説明 |
 |-----------|----|----|
 | `message` | `MessageItem<T>` | 表示するメッセージアイテム |
-| `params` | `T` | メッセージに渡すパラメータ（タプル形式） |
+| `params` | `T` | メッセージに渡すパラメータ（オブジェクト形式） |
 
 #### 使用例
 
@@ -279,7 +279,7 @@ export default App
 {/* パラメータ付きメッセージ */}
 <TypedMessage 
   message={messages.WELCOME_USER} 
-  params={["John", "Doe", 25]} 
+  params={{ firstName: "太郎", lastName: "田中", age: 25 }} 
 />
 ```
 
@@ -290,12 +290,12 @@ TypeScriptが自動的に`params`の必要性と型を推論します：
 ```typescript
 // ✅ 正しい使用法
 <TypedMessage message={simpleMessage} />
-<TypedMessage message={paramMessage} params={["value1", 42]} />
+<TypedMessage message={paramMessage} params={{ name: "値1", count: 42 }} />
 
 // ❌ コンパイルエラー
-<TypedMessage message={simpleMessage} params={["invalid"]} />
+<TypedMessage message={simpleMessage} params={{ invalid: "param" }} />
 <TypedMessage message={paramMessage} />  // paramsが必要
-<TypedMessage message={paramMessage} params={["wrong", "types"]} />
+<TypedMessage message={paramMessage} params={{ wrong: "types" }} />
 ```
 
 ### typedMessagePlugin
@@ -351,7 +351,6 @@ typedMessagePlugin({
 ```typescript
 interface SimpleMessageItem {
   key: string;
-  formatter: () => string;
   fallback: string;
 }
 ```
@@ -359,195 +358,82 @@ interface SimpleMessageItem {
 #### MessageItem（パラメータ付き）
 
 ```typescript
-interface MessageItem<T extends readonly [any, ...any[]]> {
+interface MessageItem<T extends Record<string, any>> {
   key: string;
-  formatter: (...args: T) => string;
-  fallback: string;
+  fallback: (params: T) => string;
 }
 ```
 
 - `key`: ロケール辞書で検索するキー
-- `formatter`: パラメータを受け取ってフォーマットされた文字列を返す関数
-- `fallback`: メッセージが見つからない場合のフォールバック値（Viteプラグインによってビルド時に特定されます）
+- `fallback`: パラメータオブジェクトを受け取ってフォーマット済み文字列を返す関数
 
 ### useTypedMessage
 
-TypedMessageProviderからメッセージ取得関数を取得するフック。この関数はメッセージアイテムを受け取り、辞書からメッセージを検索して、見つからない場合はformatter関数を使用します。
+TypedMessageProviderからメッセージ取得関数を取得するフック。この関数はメッセージアイテムを受け取り、辞書からメッセージを検索して、見つからない場合はfallback関数を使用します。
 
 ```typescript
 const getMessage = useTypedMessage()
 
 // 引数なしメッセージ取得
-const text = getMessage(messages.WELCOME_MESSAGE)
+const simpleResult = getMessage(simpleMessage)
 
-// パラメータ付きメッセージ取得（タプル形式）
-const userText = getMessage(messages.WELCOME_USER, ["John", "Doe", 25])
+// パラメータ付きメッセージ取得（オブジェクト形式）
+const paramResult = getMessage(paramMessage, { name: "太郎", age: 30 })
 ```
 
-#### 戻り値
+## 高度な機能
 
-オーバーロードされた関数:
-- `(message: SimpleMessageItem) => string` - 引数なしメッセージ用
-- `(message: MessageItem<T>, args: T) => string` - パラメータ付きメッセージ用
+### プレースホルダーの順序非依存
 
-#### 使用例
+オブジェクトベースのパラメータシステムにより、異なるロケールファイルでプレースホルダーが任意の順序で表示できます：
 
-```typescript
-const MyComponent = () => {
-  const getMessage = useTypedMessage()
-  
-  return (
-    <div>
-      <h1>{getMessage(messages.TITLE)}</h1>
-      <p>{getMessage(messages.WELCOME_USER, ["太郎", "田中", 30])}</p>
-    </div>
-  )
-}
-```
-
-**注意**: この関数はコンテキスト内でフォールバック処理を自動で行います。辞書にキーが存在しない場合、formatter関数またはfallback値が使用されます。
-
-## 生成されるコード例
-
-```typescript
-// src/generated/messages.ts (自動生成)
-export interface SimpleMessageItem {
-  key: string;
-  formatter: () => string;
-  fallback: string;
-}
-
-export interface MessageItem<T extends readonly [any, ...any[]]> {
-  key: string;
-  formatter: (...args: T) => string;
-  fallback: string;
-}
-
-export const messages = {
-  // 引数なしメッセージ
-  WELCOME_MESSAGE: {
-    key: "WELCOME_MESSAGE",
-    formatter: () => "ようこそ",
-    fallback: "ようこそ"
-  } as SimpleMessageItem,
-  
-  BUTTON_SUBMIT: {
-    key: "BUTTON_SUBMIT",
-    formatter: () => "送信",
-    fallback: "送信"
-  } as SimpleMessageItem,
-
-  // パラメータ付きメッセージ - TypeScriptで型推論される！
-  WELCOME_USER: {
-    key: "WELCOME_USER",
-    formatter: (firstName: string, lastName: string, age: number) => 
-      `Hello ${firstName} ${lastName}, you are ${age} years old!`,
-    fallback: "Hello {firstName} {lastName}, you are {age:number} years old!"
-  } as MessageItem<readonly [firstName: string, lastName: string, age: number]>,
-  
-  ITEM_COUNT: {
-    key: "ITEM_COUNT",
-    formatter: (count: number, itemType: string) => 
-      `You have ${count} ${itemType}`,
-    fallback: "You have {count:number} {itemType}"
-  } as MessageItem<readonly [count: number, itemType: string]>,
-  
-  FORMATTED_DATE: {
-    key: "FORMATTED_DATE",
-    formatter: (date: Date, temp: number) => 
-      `Today is ${date.toLocaleDateString()}, temperature is ${temp}°C`,
-    fallback: "Today is {date:date}, temperature is {temp:number}°C"
-  } as MessageItem<readonly [date: Date, temp: number]>
-};
-```
-
-`fallback`値は`fallbackPriorityOrder`で指定した優先順位に基づいて決定されます。
-
-プレースホルダーが検出されると、以下の処理が自動で行われます：
-- プレースホルダーの型情報を解析（`{name:string}`, `{age:number}` など）
-- TypeScriptの名前付きタプル型を生成
-- テンプレートリテラルを使用したformatter関数を生成
-- 引数の型安全性を保証
-
-## 主な機能
-
-### 統合されたコンポーネントAPI
-
-一つの`TypedMessage`コンポーネントで、引数なしとパラメータ付きメッセージの両方を処理：
-
-```tsx
-// 同一コンポーネントで異なる使用法
-<TypedMessage message={messages.SIMPLE_MESSAGE} />
-<TypedMessage message={messages.PARAM_MESSAGE} params={[value1, value2]} />
-```
-
-### 型レベルでの制約
-
-TypeScriptのオーバーロードとジェネリクスにより、不正な使用をコンパイル時に検出：
-
-```typescript
-// SimpleMessageItemには params を渡せない
-<TypedMessage message={simpleMessage} params={[...]} />  // ❌ エラー
-
-// MessageItemには params が必須
-<TypedMessage message={paramMessage} />  // ❌ エラー
-
-// 正しい型の引数が必要
-<TypedMessage message={userMessage} params={["name", 42, "extra"]} />  // ❌ エラー
-```
-
-### 自動プレースホルダー解析
-
-JSON内のプレースホルダーから自動で TypeScript 型を生成：
-
+**locale/en.json**
 ```json
 {
-  "USER_INFO": "Name: {name}, Age: {age:number}, Active: {isActive:boolean}"
+  "USER_INFO": "Hello {firstName} {lastName}, you are {age:number} years old!"
 }
 ```
 
-↓ 自動生成
-
-```typescript
-MessageItem<readonly [name: string, age: number, isActive: boolean]>
+**locale/ja.json**  
+```json
+{
+  "USER_INFO": "こんにちは {lastName} {firstName}さん、あなたは{age:number}歳です！"
+}
 ```
 
-## 開発とビルド
+両方とも同じパラメータオブジェクトで正しく動作します：
 
-### デモページの起動
-
-```bash
-npm run dev
+```tsx
+<TypedMessage 
+  message={messages.USER_INFO} 
+  params={{ firstName: "太郎", lastName: "田中", age: 25 }} 
+/>
 ```
 
-http://localhost:3000 でデモページが確認できます。
+結果:
+- 英語: "Hello 太郎 田中, you are 25 years old!"
+- 日本語: "こんにちは 田中 太郎さん、あなたは25歳です！"
 
-### テストの実行
+### 欠損プレースホルダーの処理
 
-```bash
-npm test          # ユニットテスト
+ロケールファイルでプレースホルダーが欠落している場合、単に無視されます：
+
+**locale/en.json**
+```json
+{
+  "PARTIAL_MESSAGE": "Hello {firstName}, welcome!"
+}
 ```
 
-### ライブラリのビルド
-
-```bash
-npm run build
+```tsx
+<TypedMessage 
+  message={messages.PARTIAL_MESSAGE} 
+  params={{ firstName: "太郎", lastName: "田中", age: 30 }} 
+/>
 ```
 
-## 貢献
-
-プルリクエストやイシューの報告を歓迎します。
+結果: "Hello 太郎, welcome!" （未使用パラメータは無視されます）
 
 ## ライセンス
 
-MIT License
-
-## 関連プロジェクト
-
-- [React](https://reactjs.org/)
-- [Vite](https://vitejs.dev/)
-- [TypeScript](https://www.typescriptlang.org/)
-
----
-
-**注意**: このライブラリはVite環境での使用を想定しています。他のビルドツールでは動作しない可能性があります。
+MIT License。詳細は[LICENSE](./LICENSE)をご覧ください。
