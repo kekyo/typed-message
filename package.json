@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "dev": "vite demo",
-    "build": "rv --npm . && vite build",
+    "build": "rv --npm . && vite build && vite build --mode demo",
     "test": "npm run build && npm run test:run",
     "test:run": "vitest --run",
     "test:coverage": "vitest --coverage --run"
