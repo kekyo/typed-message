@@ -1,6 +1,6 @@
 # typed-message
 
-TypeScriptとReactでタイプセーフな国際化メッセージを提供するライブラリです。
+TypeScript+React+Viteでタイプセーフな国際化メッセージを提供するライブラリです。
 
 [![npm version](https://img.shields.io/npm/v/typed-message.svg)](https://github.com/kekyo/typed-message)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,13 +10,57 @@ TypeScriptとReactでタイプセーフな国際化メッセージを提供す�
 
 ## 特徴
 
-- 🔒 **完全にタイプセーフ** - TypeScriptでコンパイル時にメッセージキーのバリデーション
-- 🔄 **ホットリロード対応** - 開発時にロケールファイルの変更を自動検知
-- 📦 **フォールバックメッセージの自動集約** - メッセージが見つからない場合のフォールバックメッセージを指定可能
-- 🎯 **パラメータ付きメッセージ** - プレースホルダーを使った動的メッセージフォーマット（型安全）
-- 🎨 **統合されたAPI** - 引数なしとパラメータ付きメッセージの両方を同一コンポーネントで処理
-- ⚡ **軽量** - 最小限の依存関係とバンドルサイズ
-- 🎯 **Vite最適化** - Viteプラグインによる自動コード生成
+Reactで、国際化されるメッセージの生成や出力を行う時に、厳密に型指定されたパラメータを指定できたら良いなと考えたことはありますか？
+
+メッセージ文字列の整形時にInterpolation Stringを使うことは出来ますが、これを使用するとメッセージの国際化が難しいので使えず、
+かと言って通常の文字列フォーマット関数では、与える引数と型のチェックが行えません。
+
+このパッケージを使用すると、国際化されたメッセージをJSONファイルで管理しつつ、そこに指定されたパラメータ群をタイプセーフな定義に基づいた形式で指定させることが出来ます。例えば、以下のようなメッセージファイルを用意しておき:
+
+```json
+{
+  "WELCOME_USER": "Welcome {firstName} {lastName}! Age: {age:number}",
+}
+```
+
+Reactコンポーネントを使って、このメッセージを表示できます:
+
+```tsx
+{/* The provider */}
+<TypedMessageProvider messages={localeMessages[locale]}> 
+  {/* Place the component that formatted string */}
+  <TypedMessage 
+    message={messages.WELCOME_USER} 
+    params={{ firstName: "John ", lastName: "Doe", age: 25 }} /> 
+</TypedMessageProvider> 
+```
+
+しかも、`params`に指定するフォーマットパラメータオブジェクトは、TypeScriptによって型付けされているので、パラメータ名や型で迷ったり誤った型を指定することがありません。
+
+もちろん、Reactコンポーネントではなくフック関数として使用することも出来ます:
+
+```tsx
+// Use message getter function
+const getMessage = useTypedMessage();
+
+// To format with the parameters
+const formatted = getMessage(
+  messages.WELCOME_USER,
+  { firstName: "Jane", lastName: "Smith", age: 30 });
+```
+
+そして、ロケールによってパラメータ順序が変化しても、コードに変更を加える必要はありません。
+パラメータ型の抽出は、Viteプラグインによって自動的に行われます。つまり、あなたはロケール毎のメッセージファイルを編集するだけで良いのです！
+
+### 主な機能
+
+- 完全にタイプセーフ - TypeScriptでコンパイル時にメッセージキーのバリデーション
+- ホットリロード対応 - 開発時にロケールファイルの変更を自動検知
+- フォールバックメッセージの自動集約 - メッセージが見つからない場合のフォールバックメッセージを指定可能
+- パラメータ付きメッセージ - プレースホルダーを使った動的メッセージフォーマット（型安全）
+- Vite最適化 - Viteプラグインによる自動コード生成
+
+----
 
 ## インストール
 
@@ -26,9 +70,9 @@ npm install typed-message
 
 ## 基本的な使用方法
 
-### 1. Viteプラグインの設定
+### Viteプラグインの有効化
 
-`vite.config.ts`にプラグインを追加:
+`vite.config.ts`に`typedMessagePlugin()`を追加して下さい:
 
 ```typescript
 import { defineConfig } from 'vite'
@@ -46,22 +90,14 @@ export default defineConfig({
 })
 ```
 
-**注記**: Viteプラグインは`typed-message/vite`サブパスからインポートされ、メインライブラリを軽量に保ち、ランタイム使用時に不要なVite依存関係を避けます。
-
-### 2. ロケールファイルの作成
+### ロケールファイルの作成
 
 プロジェクトルートに`locale`ディレクトリを作成し、JSONファイルを配置します。
 `fallback.json`は、その他のロケールファイルからメッセージが特定できない場合に参照されます。
 
 #### 基本メッセージ
 
-**locale/fallback.json**
-```json
-{
-  "WELCOME_MESSAGE": "Welcome",
-  "BUTTON_SUBMIT": "Submit"
-}
-```
+言語名に基づいたメッセージファイルを準備します。以下に、英語と日本語の例を示します:
 
 **locale/en.json**
 ```json
@@ -79,18 +115,19 @@ export default defineConfig({
 }
 ```
 
-#### パラメータ付きメッセージ
-
-プレースホルダー構文 `{変数名}` および型指定 `{変数名:型}` を使用できます：
+フォールバックロケールは任意ですが、これを用意しておくと、メッセージファイルが提供されなかった場合でも、ハードコーディングされた安全なメッセージとして使用できます:
 
 **locale/fallback.json**
 ```json
 {
-  "WELCOME_USER": "Hello {firstName} {lastName}, you are {age:number} years old!",
-  "ITEM_COUNT": "You have {count:number} {itemType}",
-  "FORMATTED_DATE": "Today is {date:date}, temperature is {temp:number}°C"
+  "WELCOME_MESSAGE": "Welcome",
+  "BUTTON_SUBMIT": "Submit"
 }
 ```
+
+#### パラメータ付きメッセージ
+
+プレースホルダー構文 `{変数名}` および型指定 `{変数名:型}` を使用できます。以下に例を示します:
 
 **locale/en.json**
 ```json
@@ -110,15 +147,35 @@ export default defineConfig({
 }
 ```
 
+**locale/fallback.json**
+```json
+{
+  "WELCOME_USER": "Hello {firstName} {lastName}, you are {age:number} years old!",
+  "ITEM_COUNT": "You have {count:number} {itemType}",
+  "FORMATTED_DATE": "Today is {date:date}, temperature is {temp:number}°C"
+}
+```
+
 サポートされる型：
 - `string` - 文字列（デフォルト、型指定省略可）
 - `number` - 数値
 - `boolean` - 真偽値
 - `date` - 日付オブジェクト
 
-### 3. Reactアプリケーションでの使用
+### Reactアプリケーションでの使用
+
+手動ビルドを行っている場合は、ビルドして下さい。
+Viteプラグインの導入が正しければ、メッセージファイルを編集するだけで、`src/generated/messages.ts`ファイルが自動生成されるはずです!
+
+これで準備は整ったので、後はメッセージを使うだけです。
 
 #### TypedMessageコンポーネント（推奨）
+
+Reactのコンポーネントを使用して、エレメントに直接メッセージを埋め込みます。
+`TypedMessage`コンポーネントより前に、`TypedMessageProvider`プロバイダーが必要です。
+このプロバイダーは外部からメッセージ辞書を受け取って、メッセージ変換を実現させます。
+
+以下の例は、言語切り替えUIで、日本語と英語のメッセージ切り替えを実現します:
 
 ```tsx
 import React, { useState } from 'react'
@@ -181,6 +238,8 @@ const App = () => {
 export default App
 ```
 
+`TypedMessageProvider`へのメッセージ辞書の供給方法は自由に決定できます。上記の例ではTypeScriptの`import`を使用して、直接ソースコード上にJSON辞書を挿入しましたが、外部サーバーからダウンロードして設定するなど、様々な手法が考えられます。
+
 #### useTypedMessageフックを直接使用する場合
 
 ```tsx
@@ -193,7 +252,7 @@ import enMessages from '../locale/en.json'
 import jaMessages from '../locale/ja.json'
 
 const MyComponent = () => {
-  const getMessage = useTypedMessage()
+  const getMessage = useTypedMessage();
 
   return (
     <div>
@@ -210,7 +269,7 @@ const MyComponent = () => {
 }
 
 const App = () => {
-  const [locale, setLocale] = useState('en')
+  const [locale, setLocale] = useState('en');
 
   const localeMessages = {
     en: enMessages,
@@ -232,6 +291,8 @@ const App = () => {
 
 export default App
 ```
+
+----
 
 ## API リファレンス
 
@@ -514,6 +575,8 @@ export const messages = {
 ```
 
 結果: "Hello 太郎, welcome!" （未使用パラメータは無視されます）
+
+----
 
 ## ライセンス
 
