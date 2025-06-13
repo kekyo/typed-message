@@ -3,6 +3,23 @@
   "version": "0.5.5",
   "type": "module",
   "description": "A TypeScript and React library for providing type-safe internationalization messages.",
+  "keywords": [
+    "react",
+    "typescript",
+    "i18n",
+    "internationalization",
+    "vite",
+    "type-safe",
+    "messages",
+    "formatting"
+  ],
+  "author": "Kouji Matsui (@kekyo@mi.kekyo.net)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kekyo/typed-message.git"
+  },
+  "homepage": "https://github.com/kekyo/typed-message#readme",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
@@ -28,21 +45,6 @@
     "test:run": "vitest --run",
     "test:coverage": "vitest --coverage --run"
   },
-  "keywords": [
-    "react",
-    "typescript",
-    "i18n",
-    "internationalization",
-    "vite",
-    "type-safe"
-  ],
-  "author": "Kouji Matsui (@kekyo@mi.kekyo.net)",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/kekyo/typed-message.git"
-  },
-  "homepage": "https://github.com/kekyo/typed-message#readme",
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"

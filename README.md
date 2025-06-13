@@ -1,6 +1,6 @@
 # typed-message
 
-A TypeScript and React library for providing type-safe internationalized messages.
+A library for providing type-safe internationalized messages on TypeScript + React + Vite environment.
 
 [![npm version](https://img.shields.io/npm/v/typed-message.svg)](https://www.npmjs.com/package/typed-message)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,13 +10,56 @@ A TypeScript and React library for providing type-safe internationalized message
 
 ## Features
 
-- 🔒 **Completely Type-Safe** - Compile-time validation of message keys with TypeScript
-- 🔄 **Hot Reload Support** - Automatic detection of locale file changes during development
-- 📦 **Automatic Fallback Message Aggregation** - Specify fallback messages for when a message is not found
-- 🎯 **Parameterized Messages** - Dynamic message formatting using placeholders (type-safe)
-- 🎨 **Unified API** - Handle both non-parameterized and parameterized messages with the same component
-- ⚡ **Lightweight** - Minimal dependencies and bundle size
-- 🎯 **Vite Optimized** - Automatic code generation via Vite plugin
+Have you ever thought that it would be nice to be able to specify strictly typed parameters when generating and outputting internationalized messages in React?
+
+You can use Interpolation String when formatting message strings, but you can't use this because it makes it difficult to internationalize messages. On the other hand, the usual string formatting functions do not check the arguments and types given.
+
+This package allows you to manage internationalized messages in a JSON file and specify parameters based on a type-safe definition. For example, the following message file could be prepared:
+
+```json 
+{ 
+ "WELCOME_USER": "Welcome {firstName} {lastName}! Age: {age:number}", 
+} 
+```
+
+You can use a React component to display this message:
+
+```tsx
+{/* The provider */}
+<TypedMessageProvider messages={localeMessages[locale]}> 
+  {/* Place the component that formatted string */}
+  <TypedMessage 
+    message={messages.WELCOME_USER} 
+    params={{ firstName: "John ", lastName: "Doe", age: 25 }} /> 
+</TypedMessageProvider> 
+```
+
+Moreover, the format parameter object you specify for ``params`` is typed by TypeScript, so you will never get lost or specify the wrong type for a parameter name or type.
+
+Of course, you can also use it as a hook function instead of a React component:
+
+```tsx
+// Use message getter function
+const getMessage = useTypedMessage();
+
+// To format with the parameters
+const formatted = getMessage(
+  messages.WELCOME_USER,
+  { firstName: "Jane", lastName: "Smith", age: 30 });
+```
+
+And if the parameter order changes depending on the locale, there is no need to make any changes to the code.
+Parameter type extraction is done automatically by the Vite plugin. This means you only need to edit the message file for each locale!
+
+### Main Features
+
+- Completely Type-Safe - Compile-time validation of message keys with TypeScript
+- Hot Reload Support - Automatic detection of locale file changes during development
+- Automatic Fallback Message Aggregation - Specify fallback messages for when a message is not found
+- Parameterized Messages - Dynamic message formatting using placeholders (type-safe)
+- Vite Optimized - Automatic code generation via Vite plugin
+
+----
 
 ## Installation
 
@@ -26,9 +69,9 @@ npm install typed-message
 
 ## Basic Usage
 
-### 1. Vite Plugin Configuration
+### Enabling Vite Plugin
 
-Add the plugin to your `vite.config.ts`:
+Add `typedMessagePlugin()` to your `vite.config.ts`:
 
 ```typescript
 import { defineConfig } from 'vite'
@@ -46,22 +89,14 @@ export default defineConfig({
 })
 ```
 
-**Note**: The Vite plugin is imported from `typed-message/vite` sub-path to keep the main library lightweight and avoid unnecessary Vite dependencies for runtime usage.
-
-### 2. Creating Locale Files
+### Creating Locale Files
 
 Create a `locale` directory in your project root and place JSON files in it.
 `fallback.json` is referenced when messages cannot be found in other locale files.
 
 #### Basic Messages
 
-**locale/fallback.json**
-```json
-{
-  "WELCOME_MESSAGE": "Welcome",
-  "BUTTON_SUBMIT": "Submit"
-}
-```
+Prepare a message file based on the language name. Examples in English and Japanese are shown below:
 
 **locale/en.json**
 ```json
@@ -79,18 +114,19 @@ Create a `locale` directory in your project root and place JSON files in it.
 }
 ```
 
-#### Parameterized Messages
-
-You can use placeholder syntax `{variableName}` and type specification `{variableName:type}`:
+The fallback locale is optional, but having it ready allows you to use it as a hard-coded safe message in case a message file is not provided: 
 
 **locale/fallback.json**
 ```json
 {
-  "WELCOME_USER": "Hello {firstName} {lastName}, you are {age:number} years old!",
-  "ITEM_COUNT": "You have {count:number} {itemType}",
-  "FORMATTED_DATE": "Today is {date:date}, temperature is {temp:number}°C"
+  "WELCOME_MESSAGE": "Welcome",
+  "BUTTON_SUBMIT": "Submit"
 }
 ```
+
+#### Parameterized Messages
+
+You can use placeholder syntax `{variableName}` and type specification `{variableName:type}`. Example below:
 
 **locale/en.json**
 ```json
@@ -110,15 +146,35 @@ You can use placeholder syntax `{variableName}` and type specification `{variabl
 }
 ```
 
+**locale/fallback.json**
+```json
+{
+  "WELCOME_USER": "Hello {firstName} {lastName}, you are {age:number} years old!",
+  "ITEM_COUNT": "You have {count:number} {itemType}",
+  "FORMATTED_DATE": "Today is {date:date}, temperature is {temp:number}°C"
+}
+```
+
 Supported types:
 - `string` - String (default, type specification can be omitted)
 - `number` - Number
 - `boolean` - Boolean
 - `date` - Date object
 
-### 3. Usage in React Applications
+### Usage in React Applications
+
+If you are doing a manual build, please build it.
+The Vite plugin is installed correctly, just edit the message file and the `src/generated/messages.ts` file should be generated automatically!
+
+Now that you are ready, all you have to do is use the message.
 
 #### TypedMessage Component (Recommended)
+
+Use React components to embed messages directly into elements.
+Before the `TypedMessage` component, a `TypedMessageProvider` provider is required.
+This provider receives the message dictionary from an external source and makes the message transformation happen.
+
+The following example is a language-switching UI, which enables message switching between Japanese and English:
 
 ```tsx
 import React, { useState } from 'react'
@@ -181,6 +237,8 @@ const App = () => {
 export default App
 ```
 
+You can freely decide how to supply message dictionaries to `TypedMessageProvider`. In the above example, we used TypeScript `import` to insert the JSON dictionary directly on the source code, but there are many other possible methods, such as downloading from an external server and setting up.
+
 #### Using useTypedMessage Hook Directly
 
 ```tsx
@@ -193,7 +251,7 @@ import enMessages from '../locale/en.json'
 import jaMessages from '../locale/ja.json'
 
 const MyComponent = () => {
-  const getMessage = useTypedMessage()
+  const getMessage = useTypedMessage();
 
   return (
     <div>
@@ -210,7 +268,7 @@ const MyComponent = () => {
 }
 
 const App = () => {
-  const [locale, setLocale] = useState('en')
+  const [locale, setLocale] = useState('en');
 
   const localeMessages = {
     en: enMessages,
@@ -232,6 +290,8 @@ const App = () => {
 
 export default App
 ```
+
+----
 
 ## API Reference
 
@@ -514,6 +574,8 @@ If a placeholder is missing from a locale file, it will be gracefully ignored:
 ```
 
 Result: "Hello John, welcome!" (unused parameters are ignored)
+
+----
 
 ## License
 
