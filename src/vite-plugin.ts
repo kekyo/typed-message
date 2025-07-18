@@ -7,6 +7,7 @@ import type { Plugin } from 'vite';
 import { existsSync } from 'fs';
 import { readFile, readdir, stat, writeFile, mkdir } from 'fs/promises';
 import { join, resolve, dirname, extname, basename } from 'path';
+import JSON5 from 'json5';
 import type { PlaceholderInfo, ParsedMessage } from './types';
 
 /**
@@ -142,7 +143,7 @@ const checkPlaceholderTypeConsistency = async (
     
     try {
       const content = await readFile(filePath, 'utf-8');
-      const localeData: LocaleData = JSON.parse(content);
+      const localeData: LocaleData = JSON5.parse(content);
       
       localeMessages[file] = {};
       
