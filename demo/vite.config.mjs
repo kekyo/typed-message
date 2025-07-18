@@ -22,7 +22,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'typed-message': resolve(__dirname, '../dist/index.js'),
+      'typed-message': resolve(__dirname, '../dist/index.mjs'),
     },
   },
 });

@@ -85,3 +85,5 @@ export const messages = {
     fallback: "FB:Fallback Demo {value:number}: {status}" 
   } as MessageItem<{ value: number; status: string }>
 } as const;
+
+export default messages;

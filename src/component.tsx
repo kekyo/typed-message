@@ -3,7 +3,7 @@
 // Under MIT
 // https://github.com/kekyo/typed-message
 
-import React, { useMemo } from 'react';
+import { JSX, useMemo } from 'react';
 import { useTypedMessage } from './provider';
 import type { SimpleMessageItem, MessageItem } from './types';
 
@@ -30,15 +30,17 @@ import type { SimpleMessageItem, MessageItem } from './types';
  * ```
  */
 // Function overloads for TypedMessage
-export function TypedMessage(props: { message: SimpleMessageItem }): React.ReactElement;
+export function TypedMessage(props: {
+  message: SimpleMessageItem
+}): JSX.Element;
 export function TypedMessage<T extends Record<string, any>>(props: { 
   message: MessageItem<T>; 
   params: T; 
-}): React.ReactElement;
+}): JSX.Element;
 export function TypedMessage<T extends Record<string, any>>(props: { 
   message: SimpleMessageItem | MessageItem<T>; 
   params?: T; 
-}): React.ReactElement {
+}): JSX.Element {
   const getMessage = useTypedMessage();
   
   const result = useMemo(() => {
