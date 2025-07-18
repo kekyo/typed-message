@@ -237,7 +237,7 @@ const checkPlaceholderTypeConsistency = (
   }
   
   return { aggregatedMessages, warnings, invalidFiles };
-}
+};
 
 // Function to generate JSDoc comments for warnings
 const generateWarningJSDoc = (warning: MessageWarning): string => {
@@ -252,7 +252,148 @@ const generateWarningJSDoc = (warning: MessageWarning): string => {
    * Warning: Placeholder types do not match across locales
 ${conflictDescriptions}
    */`;
-}
+};
+
+// Message file generation function
+const generateMessageFile = (options: Required<TypedMessagePluginOptions>, rootDir: string) => {
+  try {
+    const localeDir = resolve(rootDir, options.localeDir);
+    const outputPath = resolve(rootDir, options.outputPath);
+    
+    // Create locale directory if it doesn't exist
+    if (!existsSync(localeDir)) {
+      console.warn(`Locale directory does not exist: ${localeDir}`);
+      return;
+    }
+
+    // Read JSON files
+    const localeFiles = getLocaleFiles(localeDir, options.fallbackPriorityOrder);
+    const { aggregatedMessages, warnings, invalidFiles } = checkPlaceholderTypeConsistency(localeFiles, localeDir);
+    
+    // Generate TypeScript code
+    const tsCode = generateTypeScriptCode(aggregatedMessages, warnings, invalidFiles);
+    
+    // Create output directory
+    const outputDir = dirname(outputPath);
+    if (!existsSync(outputDir)) {
+      mkdirSync(outputDir, { recursive: true });
+    }
+    
+    // Write file
+    writeFileSync(outputPath, tsCode, 'utf-8');
+    
+    console.log(`Generated typed messages: ${outputPath} (${Object.keys(aggregatedMessages).length} keys)`);
+    
+    // Warnings in logs
+    if (warnings.length > 0) {
+      console.warn(`Placeholder type mismatches detected in ${warnings.length} message(s):`);
+      warnings.forEach(warning => {
+        console.warn(`  - ${warning.key}: ${warning.conflicts.map(c => c.parameterName).join(', ')}`);
+      });
+    }
+
+    if (invalidFiles.length > 0) {
+      console.warn(`${invalidFiles.length} invalid JSON file(s) detected:`, invalidFiles);
+    }
+  } catch (error) {
+    console.error('Error generating message file:', error);
+  }
+};
+
+// Get locale file list
+const getLocaleFiles = (localeDir: string, fallbackPriorityOrder: string[]): string[] => {
+  if (!existsSync(localeDir)) {
+    return [];
+  }
+  
+  return readdirSync(localeDir)
+    .filter(file => {
+      const filePath = join(localeDir, file);
+      const isFile = statSync(filePath).isFile();
+      const isJson = extname(file) === '.json';
+      return isFile && isJson;
+    })
+    .sort((a, b) => {
+      // Get filename without extension
+      const aBase = basename(a, '.json');
+      const bBase = basename(b, '.json');
+
+      // Get index in fallbackPriorityOrder array (-1 if not found)
+      const aIndex = fallbackPriorityOrder.indexOf(aBase);
+      const bIndex = fallbackPriorityOrder.indexOf(bBase);
+
+      // If both are in fallbackPriorityOrder
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+
+      // If only a is in fallbackPriorityOrder (prioritize a)
+      if (aIndex !== -1 && bIndex === -1) {
+        return -1;
+      }
+
+      // If only b is in fallbackPriorityOrder (prioritize b)
+      if (aIndex === -1 && bIndex !== -1) {
+        return 1;
+      }
+
+      // If neither is in fallbackPriorityOrder (alphabetical order)
+      return a.localeCompare(b);
+    });
+};
+
+// TypeScript code generation
+const generateTypeScriptCode = (messages: AggregatedMessages, warnings: MessageWarning[], invalidFiles: string[]): string => {
+  const entries = Object.entries(messages);
+  const warningMap = new Map(warnings.map(w => [w.key, w]));
+  
+  const messageItems = entries
+    .map(([key, message]) => {
+      const escapedKey = JSON.stringify(key);
+      const warning = warningMap.get(key);
+      const warningComment = warning ? generateWarningJSDoc(warning) : '';
+      
+      if (message.placeholders.length === 0) {
+        // SimpleMessageItem for non-parameterized messages
+        const escapedFallback = JSON.stringify(message.fallback);
+        return `${warningComment}${warningComment ? '\n' : ''}  ${key}: { 
+    key: ${escapedKey}, 
+    fallback: ${escapedFallback} 
+  } as SimpleMessageItem`;
+      } else {
+        // MessageItem for parameterized messages - use template string as fallback
+        const escapedFallback = JSON.stringify(message.fallback);
+        const typeString = generateObjectTypeString(message.placeholders);
+        return `${warningComment}${warningComment ? '\n' : ''}  ${key}: { 
+    key: ${escapedKey}, 
+    fallback: ${escapedFallback} 
+  } as MessageItem<${typeString}>`;
+      }
+    })
+    .join(',\n');
+
+  // Generate JSDoc comments in case of invalid files
+  const invalidFilesComment = invalidFiles.length > 0 
+    ? `/**
+ * Warning: Failed to load the following locale files
+ * ${invalidFiles.map(file => ` * - ${file}`).join('\n')}
+ * These files are not included in the generated code.
+ */
+`
+    : '';
+
+  return `// This file is auto-generated by typed-message plugin
+// Do not edit manually
+
+import type { MessageItem, SimpleMessageItem } from 'typed-message';
+
+${invalidFilesComment}export const messages = {
+${messageItems}
+} as const;
+`;
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Vite plugin for automatic generation of type-safe internationalization messages
@@ -312,145 +453,6 @@ const typedMessage = (options: TypedMessagePluginOptions = {}): Plugin => {
     },
   };
 };
-
-// Message file generation function
-const generateMessageFile = (options: Required<TypedMessagePluginOptions>, rootDir: string) => {
-  try {
-    const localeDir = resolve(rootDir, options.localeDir);
-    const outputPath = resolve(rootDir, options.outputPath);
-    
-    // Create locale directory if it doesn't exist
-    if (!existsSync(localeDir)) {
-      console.warn(`Locale directory does not exist: ${localeDir}`);
-      return;
-    }
-
-    // Read JSON files
-    const localeFiles = getLocaleFiles(localeDir, options.fallbackPriorityOrder);
-    const { aggregatedMessages, warnings, invalidFiles } = checkPlaceholderTypeConsistency(localeFiles, localeDir);
-    
-    // Generate TypeScript code
-    const tsCode = generateTypeScriptCode(aggregatedMessages, warnings, invalidFiles);
-    
-    // Create output directory
-    const outputDir = dirname(outputPath);
-    if (!existsSync(outputDir)) {
-      mkdirSync(outputDir, { recursive: true });
-    }
-    
-    // Write file
-    writeFileSync(outputPath, tsCode, 'utf-8');
-    
-    console.log(`Generated typed messages: ${outputPath} (${Object.keys(aggregatedMessages).length} keys)`);
-    
-    // Warnings in logs
-    if (warnings.length > 0) {
-      console.warn(`Placeholder type mismatches detected in ${warnings.length} message(s):`);
-      warnings.forEach(warning => {
-        console.warn(`  - ${warning.key}: ${warning.conflicts.map(c => c.parameterName).join(', ')}`);
-      });
-    }
-
-    if (invalidFiles.length > 0) {
-      console.warn(`${invalidFiles.length} invalid JSON file(s) detected:`, invalidFiles);
-    }
-  } catch (error) {
-    console.error('Error generating message file:', error);
-  }
-}
-
-// Get locale file list
-const getLocaleFiles = (localeDir: string, fallbackPriorityOrder: string[]): string[] => {
-  if (!existsSync(localeDir)) {
-    return [];
-  }
-  
-  return readdirSync(localeDir)
-    .filter(file => {
-      const filePath = join(localeDir, file);
-      const isFile = statSync(filePath).isFile();
-      const isJson = extname(file) === '.json';
-      return isFile && isJson;
-    })
-    .sort((a, b) => {
-      // Get filename without extension
-      const aBase = basename(a, '.json');
-      const bBase = basename(b, '.json');
-
-      // Get index in fallbackPriorityOrder array (-1 if not found)
-      const aIndex = fallbackPriorityOrder.indexOf(aBase);
-      const bIndex = fallbackPriorityOrder.indexOf(bBase);
-
-      // If both are in fallbackPriorityOrder
-      if (aIndex !== -1 && bIndex !== -1) {
-        return aIndex - bIndex;
-      }
-
-      // If only a is in fallbackPriorityOrder (prioritize a)
-      if (aIndex !== -1 && bIndex === -1) {
-        return -1;
-      }
-
-      // If only b is in fallbackPriorityOrder (prioritize b)
-      if (aIndex === -1 && bIndex !== -1) {
-        return 1;
-      }
-
-      // If neither is in fallbackPriorityOrder (alphabetical order)
-      return a.localeCompare(b);
-    });
-}
-
-// TypeScript code generation
-const generateTypeScriptCode = (messages: AggregatedMessages, warnings: MessageWarning[], invalidFiles: string[]): string => {
-  const entries = Object.entries(messages);
-  const warningMap = new Map(warnings.map(w => [w.key, w]));
-  
-  const messageItems = entries
-    .map(([key, message]) => {
-      const escapedKey = JSON.stringify(key);
-      const warning = warningMap.get(key);
-      const warningComment = warning ? generateWarningJSDoc(warning) : '';
-      
-      if (message.placeholders.length === 0) {
-        // SimpleMessageItem for non-parameterized messages
-        const escapedFallback = JSON.stringify(message.fallback);
-        return `${warningComment}${warningComment ? '\n' : ''}  ${key}: { 
-    key: ${escapedKey}, 
-    fallback: ${escapedFallback} 
-  } as SimpleMessageItem`;
-      } else {
-        // MessageItem for parameterized messages - use template string as fallback
-        const escapedFallback = JSON.stringify(message.fallback);
-        const typeString = generateObjectTypeString(message.placeholders);
-        return `${warningComment}${warningComment ? '\n' : ''}  ${key}: { 
-    key: ${escapedKey}, 
-    fallback: ${escapedFallback} 
-  } as MessageItem<${typeString}>`;
-      }
-    })
-    .join(',\n');
-
-  // Generate JSDoc comments in case of invalid files
-  const invalidFilesComment = invalidFiles.length > 0 
-    ? `/**
- * Warning: Failed to load the following locale files
- * ${invalidFiles.map(file => ` * - ${file}`).join('\n')}
- * These files are not included in the generated code.
- */
-`
-    : '';
-
-  return `// This file is auto-generated by typed-message plugin
-// Do not edit manually
-
-import type { MessageItem, SimpleMessageItem } from 'typed-message';
-
-${invalidFilesComment}export const messages = {
-${messageItems}
-} as const;
-`;
-}
 
 /**
  * Backward compatibility symbol, use `typedMessage` default symbol instead.
