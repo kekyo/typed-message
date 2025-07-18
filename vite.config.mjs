@@ -1,14 +1,15 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
-import dts from 'vite-plugin-dts'
-import { resolve } from 'path'
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import react from '@vitejs/plugin-react-swc';
+import dts from 'vite-plugin-dts';
+import screwUp from 'screw-up';
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ _, mode }) => {
   // Demo mode
   if (process.argv.includes('demo') || mode === 'demo') {
     return {
@@ -21,7 +22,7 @@ export default defineConfig(({ command, mode }) => {
       server: {
         port: 3000,
       },
-    }
+    };
   }
 
   // Library build mode
@@ -33,7 +34,8 @@ export default defineConfig(({ command, mode }) => {
         exclude: ['src/**/*.test.*', 'src/**/*.spec.*'],
         outDir: 'dist',
         insertTypesEntry: true,
-      })
+      }),
+      screwUp()
     ],
     build: {
       lib: {
@@ -58,5 +60,5 @@ export default defineConfig(({ command, mode }) => {
       sourcemap: true,
       emptyOutDir: true,
     },
-  }
-}) 
+  };
+});

@@ -1,3 +1,8 @@
+// typed-message - Type-safe internationalization library for React and TypeScript
+// Copyright (c) Kouji Matsui (@kekyo@mi.kekyo.net)
+// Under MIT
+// https://github.com/kekyo/typed-message
+
 import type { Plugin } from 'vite';
 import { readFileSync, existsSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'fs';
 import { join, resolve, dirname, extname, basename } from 'path';
@@ -12,13 +17,13 @@ import type { PlaceholderInfo, ParsedMessage } from './types';
  * 
  * @example
  * ```typescript
- * import { typedMessagePlugin } from 'typed-message/vite';
+ * import typedMessage from 'typed-message/vite';
  * 
  * // Basic usage with defaults
- * typedMessagePlugin()
+ * typedMessage()
  * 
  * // Custom configuration
- * typedMessagePlugin({
+ * typedMessage({
  *   localeDir: 'public/locales',
  *   outputPath: 'src/i18n/messages.ts',
  *   fallbackPriorityOrder: ['ja', 'en', 'fallback']
@@ -269,11 +274,11 @@ ${conflictDescriptions}
  * ```typescript
  * // vite.config.ts
  * import { defineConfig } from 'vite';
- * import { typedMessagePlugin } from 'typed-message/vite';
+ * import typedMessage from 'typed-message/vite';
  * 
  * export default defineConfig({
  *   plugins: [
- *     typedMessagePlugin({
+ *     typedMessage({
  *       localeDir: 'locale',
  *       outputPath: 'src/generated/messages.ts'
  *     })
@@ -281,7 +286,7 @@ ${conflictDescriptions}
  * });
  * ```
  */
-export const typedMessagePlugin = (options: TypedMessagePluginOptions = {}): Plugin => {
+const typedMessage = (options: TypedMessagePluginOptions = {}): Plugin => {
   const opts = { ...defaultOptions, ...options };
   let rootDir = '';
   
@@ -447,5 +452,13 @@ ${messageItems}
 `;
 }
 
-// Plugin standalone export (for separate entry point)
-export default typedMessagePlugin;
+/**
+ * Backward compatibility symbol, use `typedMessage` default symbol instead.
+ * @deprecated Backward compatibility symbol, use `typedMessage` default symbol instead.
+ */
+export const typedMessagePlugin = typedMessage;
+
+/**
+ * Plugin standalone export (for separate entry point)
+ */
+export default typedMessage;

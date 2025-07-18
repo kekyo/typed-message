@@ -71,17 +71,17 @@ npm install typed-message
 
 ### Enabling Vite Plugin
 
-Add `typedMessagePlugin()` to your `vite.config.ts`:
+Add `typedMessage()` to your `vite.config.ts`:
 
 ```typescript
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
-import { typedMessagePlugin } from 'typed-message/vite'
+import typedMessage from 'typed-message/vite'
 
 export default defineConfig({
   plugins: [
     react(),
-    typedMessagePlugin({
+    typedMessage({
       localeDir: 'locale',  // Directory containing JSON files
       outputPath: 'src/generated/messages.ts'  // Path for generated file
     })
@@ -374,9 +374,9 @@ A Vite plugin that generates TypeScript code from JSON. It detects placeholders 
 #### Example
 
 ```typescript
-import { typedMessagePlugin } from 'typed-message/vite'
+import typedMessage from 'typed-message/vite'
 
-typedMessagePlugin({
+typedMessage({
   localeDir: 'locale',
   outputPath: 'src/generated/messages.ts',
   // Priority order: search messages in ja.json, en.json, fallback.json order
@@ -389,9 +389,9 @@ typedMessagePlugin({
 The `fallbackPriorityOrder` option controls the priority order of fallback messages:
 
 ```typescript
-import { typedMessagePlugin } from 'typed-message/vite'
+import typedMessage from 'typed-message/vite'
 
-typedMessagePlugin({
+typedMessage({
   localeDir: 'locale',
   outputPath: 'src/generated/messages.ts',
   // Priority order: search messages in ja.json, en.json, fallback.json order

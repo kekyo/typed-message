@@ -1,3 +1,8 @@
+// typed-message - Type-safe internationalization library for React and TypeScript
+// Copyright (c) Kouji Matsui (@kekyo@mi.kekyo.net)
+// Under MIT
+// https://github.com/kekyo/typed-message
+
 import React, { useMemo } from 'react';
 import { useTypedMessage } from './provider';
 import type { SimpleMessageItem, MessageItem } from './types';
