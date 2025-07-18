@@ -79,9 +79,9 @@ npm install typed-message
 Add `typedMessage()` to your `vite.config.ts`:
 
 ```typescript
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
-import typedMessage from 'typed-message/vite'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import typedMessage from 'typed-message/vite';
 
 export default defineConfig({
   plugins: [
@@ -91,7 +91,7 @@ export default defineConfig({
       outputPath: 'src/generated/messages.ts'  // Path for generated file
     })
   ]
-})
+});
 ```
 
 ### Creating Locale Files
@@ -185,21 +185,21 @@ This provider receives the message dictionary from an external source and makes 
 The following example is a language-switching UI, which enables message switching between Japanese and English:
 
 ```tsx
-import React, { useState } from 'react'
-import { TypedMessageProvider, TypedMessage } from 'typed-message'
-import { messages } from './generated/messages'
+import React, { useState } from 'react';
+import { TypedMessageProvider, TypedMessage } from 'typed-message';
+import messages from './generated/messages';
 
 // Import locale dictionaries
-import enMessages from '../locale/en.json'
-import jaMessages from '../locale/ja.json'
+import enMessages from '../locale/en.json';
+import jaMessages from '../locale/ja.json';
 
 const App = () => {
-  const [locale, setLocale] = useState('en')
+  const [locale, setLocale] = useState('en');
 
   const localeMessages = {
     en: enMessages,
     ja: jaMessages
-  }
+  };
 
   return (
     <TypedMessageProvider messages={localeMessages[locale]}>
@@ -239,8 +239,8 @@ const App = () => {
         </select>
       </div>
     </TypedMessageProvider>
-  )
-}
+  );
+};
 
 export default App
 ```
@@ -250,13 +250,13 @@ You can freely decide how to supply message dictionaries to `TypedMessageProvide
 #### Using useTypedMessage Hook Directly
 
 ```tsx
-import React, { useState } from 'react'
-import { TypedMessageProvider, useTypedMessage } from 'typed-message'
-import { messages } from './generated/messages'
+import React, { useState } from 'react';
+import { TypedMessageProvider, useTypedMessage } from 'typed-message';
+import messages from './generated/messages';
 
 // Import locale dictionaries
-import enMessages from '../locale/en.json'
-import jaMessages from '../locale/ja.json'
+import enMessages from '../locale/en.json';
+import jaMessages from '../locale/ja.json';
 
 const MyComponent = () => {
   const getMessage = useTypedMessage();
@@ -272,8 +272,8 @@ const MyComponent = () => {
       <p>{getMessage(messages.ITEM_COUNT, { count: 5, itemType: "apples" })}</p>
       <p>{getMessage(messages.FORMATTED_DATE, { date: new Date(), temp: 18 })}</p>
     </div>
-  )
-}
+  );
+};
 
 const App = () => {
   const [locale, setLocale] = useState('en');
@@ -281,7 +281,7 @@ const App = () => {
   const localeMessages = {
     en: enMessages,
     ja: jaMessages
-  }
+  };
 
   return (
     <TypedMessageProvider messages={localeMessages[locale]}>
@@ -293,10 +293,10 @@ const App = () => {
         <option value="ja">Japanese</option>
       </select>
     </TypedMessageProvider>
-  )
-}
+  );
+};
 
-export default App
+export default App;
 ```
 
 ----
@@ -382,14 +382,14 @@ A Vite plugin that generates TypeScript code from JSON. It detects placeholders 
 #### Example
 
 ```typescript
-import typedMessage from 'typed-message/vite'
+import typedMessage from 'typed-message/vite';
 
 typedMessage({
   localeDir: 'locale',
   outputPath: 'src/generated/messages.ts',
   // Priority order: search messages in ja.json, en.json, fallback.json order
   fallbackPriorityOrder: ['ja', 'en', 'fallback']
-})
+});
 ```
 
 #### Controlling Fallback Priority Order
@@ -397,14 +397,14 @@ typedMessage({
 The `fallbackPriorityOrder` option controls the priority order of fallback messages:
 
 ```typescript
-import typedMessage from 'typed-message/vite'
+import typedMessage from 'typed-message/vite';
 
 typedMessage({
   localeDir: 'locale',
   outputPath: 'src/generated/messages.ts',
   // Priority order: search messages in ja.json, en.json, fallback.json order
   fallbackPriorityOrder: ['ja', 'en', 'fallback']
-})
+});
 ```
 
 - Fallback messages are searched **towards the last element** of the array
@@ -441,13 +441,13 @@ interface MessageItem<T extends Record<string, any>> {
 A hook to get the message retrieval function from TypedMessageProvider. This function takes message items, searches for messages in the dictionary, and uses the fallback template when not found.
 
 ```typescript
-const getMessage = useTypedMessage()
+const getMessage = useTypedMessage();
 
 // Non-parameterized messages
-const simpleResult = getMessage(simpleMessage)
+const simpleResult = getMessage(simpleMessage);
 
 // Parameterized messages
-const paramResult = getMessage(paramMessage, { name: "John", age: 30 })
+const paramResult = getMessage(paramMessage, { name: "John", age: 30 });
 ```
 
 ## Advanced Features
