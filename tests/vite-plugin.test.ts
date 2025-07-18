@@ -270,4 +270,122 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).toContain('key: "VALID_KEY"');
     expect(generatedCode).toContain('fallback: "Valid Message"');
   });
+
+  it('parses JSON5 locale files with comments and trailing commas', async () => {
+    // Create JSON5 file with comments and trailing commas
+    const json5Content = `{
+      // This is a comment
+      "TITLE": "JSON5 Title",
+      "DESCRIPTION": "JSON5 Description", // inline comment
+      "COMMENTS": "Supports comments",
+      "TRAILING_COMMA": "Supports trailing commas",
+      'SINGLE_QUOTES': 'Also supports single quotes',
+      "UNQUOTED": 'Unquoted keys work too',
+    }`;
+    
+    writeFileSync(join(localeDir, 'en.json5'), json5Content);
+    
+    const plugin = typedMessage({
+      localeDir: 'locale',
+      outputPath: 'src/generated/messages.ts'
+    });
+    
+    const mockConfig = { root: testDir };
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
+    
+    // Check output file
+    const generatedCode = readFileSync(outputFile, 'utf-8');
+    expect(generatedCode).toContain('key: "TITLE"');
+    expect(generatedCode).toContain('fallback: "JSON5 Title"');
+    expect(generatedCode).toContain('key: "DESCRIPTION"');
+    expect(generatedCode).toContain('fallback: "JSON5 Description"');
+    expect(generatedCode).toContain('key: "COMMENTS"');
+    expect(generatedCode).toContain('fallback: "Supports comments"');
+    expect(generatedCode).toContain('key: "TRAILING_COMMA"');
+    expect(generatedCode).toContain('fallback: "Supports trailing commas"');
+    expect(generatedCode).toContain('key: "SINGLE_QUOTES"');
+    expect(generatedCode).toContain('fallback: "Also supports single quotes"');
+    expect(generatedCode).toContain('key: "UNQUOTED"');
+    expect(generatedCode).toContain('fallback: "Unquoted keys work too"');
+  });
+
+  it('prioritizes JSON5 files over JSON files with same base name', async () => {
+    // Create both JSON and JSON5 files with same base name
+    const jsonData = {
+      TITLE: 'JSON Title',
+      JSON_ONLY: 'Only in JSON'
+    };
+    
+    const json5Content = `{
+      // JSON5 version takes priority
+      "TITLE": "JSON5 Title",
+      "JSON5_ONLY": "Only in JSON5",
+    }`;
+    
+    writeFileSync(join(localeDir, 'en.json'), JSON.stringify(jsonData, null, 2));
+    writeFileSync(join(localeDir, 'en.json5'), json5Content);
+    
+    const plugin = typedMessage({
+      localeDir: 'locale',
+      outputPath: 'src/generated/messages.ts'
+    });
+    
+    const mockConfig = { root: testDir };
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
+    
+    // Check output file
+    const generatedCode = readFileSync(outputFile, 'utf-8');
+    
+    // JSON5 should take priority, so we should see JSON5 content
+    expect(generatedCode).toContain('key: "TITLE"');
+    expect(generatedCode).toContain('fallback: "JSON5 Title"');
+    expect(generatedCode).toContain('key: "JSON5_ONLY"');
+    expect(generatedCode).toContain('fallback: "Only in JSON5"');
+    
+    // JSON-only content should not appear
+    expect(generatedCode).not.toContain('fallback: "JSON Title"');
+    expect(generatedCode).not.toContain('key: "JSON_ONLY"');
+  });
+
+  it('handles mixed JSON and JSON5 files correctly', async () => {
+    // Create mix of JSON and JSON5 files
+    const enJsonData = {
+      EN_KEY: 'English JSON'
+    };
+    
+    const jaJson5Content = `{
+      // Japanese locale in JSON5 format
+      "JA_KEY": "Japanese JSON5",
+    }`;
+    
+    const frJsonData = {
+      FR_KEY: 'French JSON'
+    };
+    
+    writeFileSync(join(localeDir, 'en.json'), JSON.stringify(enJsonData, null, 2));
+    writeFileSync(join(localeDir, 'ja.json5'), jaJson5Content);
+    writeFileSync(join(localeDir, 'fr.json'), JSON.stringify(frJsonData, null, 2));
+    
+    const plugin = typedMessage({
+      localeDir: 'locale',
+      outputPath: 'src/generated/messages.ts'
+    });
+    
+    const mockConfig = { root: testDir };
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
+    
+    // Check output file
+    const generatedCode = readFileSync(outputFile, 'utf-8');
+    
+    // All keys should be present
+    expect(generatedCode).toContain('key: "EN_KEY"');
+    expect(generatedCode).toContain('fallback: "English JSON"');
+    expect(generatedCode).toContain('key: "JA_KEY"');
+    expect(generatedCode).toContain('fallback: "Japanese JSON5"');
+    expect(generatedCode).toContain('key: "FR_KEY"');
+    expect(generatedCode).toContain('fallback: "French JSON"');
+  });
 }); 

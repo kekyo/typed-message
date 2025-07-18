@@ -302,23 +302,37 @@ const getLocaleFiles = async (localeDir: string, fallbackPriorityOrder: string[]
   }
   
   const files = await readdir(localeDir);
-  const filteredFiles: string[] = [];
+  const fileMap = new Map<string, string>();
   
   for (const file of files) {
     const filePath = join(localeDir, file);
     const stats = await stat(filePath);
     const isFile = stats.isFile();
-    const isJson = extname(file) === '.json';
-    if (isFile && isJson) {
-      filteredFiles.push(file);
+    const ext = extname(file);
+    const isJson = ext === '.json';
+    const isJson5 = ext === '.json5';
+    
+    if (isFile && (isJson || isJson5)) {
+      const baseName = basename(file, ext);
+      
+      // If json5 file exists, it takes priority over json
+      if (isJson5) {
+        fileMap.set(baseName, file);
+      } else if (isJson && !fileMap.has(baseName)) {
+        fileMap.set(baseName, file);
+      }
     }
   }
+  
+  const filteredFiles = Array.from(fileMap.values());
   
   return filteredFiles
     .sort((a, b) => {
       // Get filename without extension
-      const aBase = basename(a, '.json');
-      const bBase = basename(b, '.json');
+      const aExt = extname(a);
+      const bExt = extname(b);
+      const aBase = basename(a, aExt);
+      const bBase = basename(b, bExt);
 
       // Get index in fallbackPriorityOrder array (-1 if not found)
       const aIndex = fallbackPriorityOrder.indexOf(aBase);
