@@ -1,6 +1,6 @@
 {
   "name": "typed-message",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "type": "module",
   "description": "A TypeScript and React library for providing type-safe internationalization messages.",
   "keywords": [
@@ -21,17 +21,17 @@
   },
   "homepage": "https://github.com/kekyo/typed-message#readme",
   "main": "dist/index.js",
-  "module": "dist/index.es.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es.js",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
     "./vite": {
       "types": "./dist/vite-plugin.d.ts",
-      "import": "./dist/vite-plugin.es.js",
+      "import": "./dist/vite-plugin.mjs",
       "require": "./dist/vite-plugin.js"
     }
   },

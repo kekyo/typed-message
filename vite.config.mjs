@@ -45,7 +45,7 @@ export default defineConfig(({ _, mode }) => {
         },
         name: 'TypedMessage',
         formats: ['es', 'cjs'],
-        fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'es.js' : 'js'}`,
+        fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'mjs' : 'js'}`,
       },
       rollupOptions: {
         external: ['react', 'react-dom', 'fs', 'fs/promises', 'os', 'crypto', 'path', 'vite'],
