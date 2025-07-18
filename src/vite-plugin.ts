@@ -406,6 +406,8 @@ import type { MessageItem, SimpleMessageItem } from 'typed-message';
 ${invalidFilesComment}export const messages = {
 ${messageItems}
 } as const;
+
+export default messages;
 `;
 };
 

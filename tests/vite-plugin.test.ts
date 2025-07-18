@@ -388,4 +388,40 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).toContain('key: "FR_KEY"');
     expect(generatedCode).toContain('fallback: "French JSON"');
   });
-}); 
+
+  it('generates both named and default exports', async () => {
+    // Create test data
+    const localeData = {
+      TITLE: 'Test Title',
+      DESCRIPTION: 'Test Description'
+    };
+    
+    writeFileSync(join(localeDir, 'en.json'), JSON.stringify(localeData, null, 2));
+    
+    // Execute plugin
+    const plugin = typedMessage({
+      localeDir: 'locale',
+      outputPath: 'src/generated/messages.ts'
+    });
+    
+    const mockConfig = { root: testDir };
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
+    
+    // Check output file contains both exports
+    expect(existsSync(outputFile)).toBe(true);
+    
+    const generatedCode = readFileSync(outputFile, 'utf-8');
+    
+    // Check for named export
+    expect(generatedCode).toContain('export const messages');
+    
+    // Check for default export
+    expect(generatedCode).toContain('export default messages');
+    
+    // Verify the default export comes after the named export
+    const namedExportIndex = generatedCode.indexOf('export const messages');
+    const defaultExportIndex = generatedCode.indexOf('export default messages');
+    expect(defaultExportIndex).toBeGreaterThan(namedExportIndex);
+  });
+});
