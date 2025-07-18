@@ -48,7 +48,7 @@ export default defineConfig(({ _, mode }) => {
         fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'es.js' : 'js'}`,
       },
       rollupOptions: {
-        external: ['react', 'react-dom', 'fs', 'path', 'vite'],
+        external: ['react', 'react-dom', 'fs', 'fs/promises', 'os', 'crypto', 'path', 'vite'],
         output: {
           globals: {
             react: 'React',

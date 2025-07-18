@@ -1,20 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { writeFileSync, mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { typedMessagePlugin } from '../src/vite-plugin';
+import { tmpdir } from 'os';
+import { randomUUID } from 'crypto';
+import typedMessage from '../src/vite-plugin';
 
 // Temporary directory for testing
-const testDir = join(process.cwd(), 'test-temp');
+const testDir = join(tmpdir(), 'test-temp', randomUUID());
 const localeDir = join(testDir, 'locale');
 const outputDir = join(testDir, 'src/generated');
 const outputFile = join(outputDir, 'messages.ts');
 
 // Helper for safely executing plugin methods
-function callPluginHook(hook: any, ...args: any[]) {
+async function callPluginHook(hook: any, ...args: any[]) {
   if (typeof hook === 'function') {
-    return hook(...args);
+    return await hook(...args);
   } else if (hook && typeof hook.handler === 'function') {
-    return hook.handler(...args);
+    return await hook.handler(...args);
   }
 }
 
@@ -36,19 +38,19 @@ describe('typedMessagePlugin', () => {
   });
 
   it('plugin initializes correctly', () => {
-    const plugin = typedMessagePlugin();
+    const plugin = typedMessage();
     expect(plugin.name).toBe('typed-message');
     expect(plugin.configResolved).toBeTypeOf('function');
     expect(plugin.buildStart).toBeTypeOf('function');
     expect(plugin.handleHotUpdate).toBeTypeOf('function');
   });
 
-  it('default options are set correctly', () => {
-    const plugin = typedMessagePlugin();
+  it('default options are set correctly', async () => {
+    const plugin = typedMessage();
     
     // Mock config
     const mockConfig = { root: testDir };
-    callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.configResolved, mockConfig);
     
     expect(plugin.name).toBe('typed-message');
   });
@@ -59,11 +61,11 @@ describe('typedMessagePlugin', () => {
       outputPath: 'custom-output/messages.ts'
     };
     
-    const plugin = typedMessagePlugin(customOptions);
+    const plugin = typedMessage(customOptions);
     expect(plugin.name).toBe('typed-message');
   });
 
-  it('generates messages from single locale file', () => {
+  it('generates messages from single locale file', async () => {
     // Create test data
     const localeData = {
       TITLE: 'Test Title',
@@ -73,14 +75,14 @@ describe('typedMessagePlugin', () => {
     writeFileSync(join(localeDir, 'en.json'), JSON.stringify(localeData, null, 2));
     
     // Execute plugin
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts'
     });
     
     const mockConfig = { root: testDir };
-    callPluginHook(plugin.configResolved, mockConfig);
-    callPluginHook(plugin.buildStart);
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
     
     // Check output file
     expect(existsSync(outputFile)).toBe(true);
@@ -98,7 +100,7 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).toContain('as SimpleMessageItem');
   });
 
-  it('aggregates multiple locale files according to priority order', () => {
+  it('aggregates multiple locale files according to priority order', async () => {
     // Create test data
     const defaultData = {
       TITLE: 'Default Title',
@@ -121,14 +123,14 @@ describe('typedMessagePlugin', () => {
     
     // Execute plugin (default priority order: ['en', 'fallback'])
     // ja.json is not in priorityOrder, so it's processed last in alphabetical order
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts'
     });
     
     const mockConfig = { root: testDir };
-    callPluginHook(plugin.configResolved, mockConfig);
-    callPluginHook(plugin.buildStart);
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
     
     // Check output file
     const generatedCode = readFileSync(outputFile, 'utf-8');
@@ -145,7 +147,7 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).toContain('fallback: "Japanese Only"');
   });
 
-  it('fallbackPriorityOrder option works correctly', () => {
+  it('fallbackPriorityOrder option works correctly', async () => {
     // Create test data
     const fallbackData = {
       TITLE: 'Fallback Title',
@@ -167,15 +169,15 @@ describe('typedMessagePlugin', () => {
     writeFileSync(join(localeDir, 'ja.json'), JSON.stringify(jaData, null, 2));
     
     // Specify custom priority order: ja has highest priority
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts',
       fallbackPriorityOrder: ['fallback', 'en', 'ja']
     });
     
     const mockConfig = { root: testDir };
-    callPluginHook(plugin.configResolved, mockConfig);
-    callPluginHook(plugin.buildStart);
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
     
     // Check output file
     const generatedCode = readFileSync(outputFile, 'utf-8');
@@ -191,7 +193,7 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).toContain('fallback: "Japanese Only"');
   });
 
-  it('files not in fallbackPriorityOrder are processed in alphabetical order', () => {
+  it('files not in fallbackPriorityOrder are processed in alphabetical order', async () => {
     // Create test data
     const aData = { A_KEY: 'A Value' };
     const bData = { B_KEY: 'B Value' };
@@ -204,15 +206,15 @@ describe('typedMessagePlugin', () => {
     writeFileSync(join(localeDir, 'en.json'), JSON.stringify(enData, null, 2));
     
     // en only specified in priorityOrder
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts',
       fallbackPriorityOrder: ['en']
     });
     
     const mockConfig = { root: testDir };
-    callPluginHook(plugin.configResolved, mockConfig);
-    callPluginHook(plugin.buildStart);
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
     
     // Check output file
     const generatedCode = readFileSync(outputFile, 'utf-8');
@@ -227,11 +229,11 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).toContain('fallback: "EN Value"');
   });
 
-  it('locale directory does not exist without error', () => {
+  it('locale directory does not exist without error', async () => {
     // Remove locale directory
     rmSync(localeDir, { recursive: true });
     
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'nonexistent-locale',
       outputPath: 'src/generated/messages.ts'
     });
@@ -239,22 +241,20 @@ describe('typedMessagePlugin', () => {
     const mockConfig = { root: testDir };
     
     // Ensure no error occurs
-    expect(() => {
-      callPluginHook(plugin.configResolved, mockConfig);
-      callPluginHook(plugin.buildStart);
-    }).not.toThrow();
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
     
     // Ensure output file is not created
     expect(existsSync(outputFile)).toBe(false);
   });
 
-  it('generates messages from invalid JSON files without error', () => {
+  it('generates messages from invalid JSON files without error', async () => {
     // Create valid and invalid files
     const validData = { VALID_KEY: 'Valid Message' };
     writeFileSync(join(localeDir, 'valid.json'), JSON.stringify(validData, null, 2));
     writeFileSync(join(localeDir, 'invalid.json'), '{ invalid json }');
     
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts'
     });
@@ -262,10 +262,8 @@ describe('typedMessagePlugin', () => {
     const mockConfig = { root: testDir };
     
     // Ensure no error occurs
-    expect(() => {
-      callPluginHook(plugin.configResolved, mockConfig);
-      callPluginHook(plugin.buildStart);
-    }).not.toThrow();
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
     
     // Ensure messages are generated from valid file
     const generatedCode = readFileSync(outputFile, 'utf-8');

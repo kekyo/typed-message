@@ -4,7 +4,8 @@
 // https://github.com/kekyo/typed-message
 
 import type { Plugin } from 'vite';
-import { readFileSync, existsSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync } from 'fs';
+import { readFile, readdir, stat, writeFile, mkdir } from 'fs/promises';
 import { join, resolve, dirname, extname, basename } from 'path';
 import type { PlaceholderInfo, ParsedMessage } from './types';
 
@@ -49,13 +50,6 @@ export interface TypedMessagePluginOptions {
   fallbackPriorityOrder?: string[];
 }
 
-// Default options
-const defaultOptions: Required<TypedMessagePluginOptions> = {
-  localeDir: 'locale',
-  outputPath: 'src/generated/messages.ts',
-  fallbackPriorityOrder: ['en', 'fallback'],
-};
-
 // Locale file type definition (simplified)
 interface LocaleData {
   [key: string]: string;
@@ -82,7 +76,7 @@ interface MessageWarning {
 const PLACEHOLDER_REGEX = /\{(\w+)(?::(\w+))?\}/g;
 
 // Function to parse placeholders
-const parsePlaceholders = (message: string): PlaceholderInfo[] => {
+const parsePlaceholders = (message: string) => {
   const placeholders: PlaceholderInfo[] = [];
   let match;
   let position = 0;
@@ -113,7 +107,7 @@ const parseMessage = (key: string, messageData: string, fallback: string): Parse
 }
 
 // Generate TypeScript named tuple type string
-const generateObjectTypeString = (placeholders: PlaceholderInfo[]): string => {
+const generateObjectTypeString = (placeholders: PlaceholderInfo[]) => {
   if (placeholders.length === 0) {
     return '{}';
   }
@@ -134,10 +128,10 @@ const generateObjectTypeString = (placeholders: PlaceholderInfo[]): string => {
 }
 
 // Function to check placeholder type consistency across locales
-const checkPlaceholderTypeConsistency = (
+const checkPlaceholderTypeConsistency = async (
   localeFiles: string[], 
   localeDir: string
-): { aggregatedMessages: AggregatedMessages; warnings: MessageWarning[]; invalidFiles: string[] } => {
+) => {
   // Analyze messages in each locale file individually
   const localeMessages: { [localeFile: string]: { [key: string]: ParsedMessage } } = {};
   const allMessageKeys = new Set<string>();
@@ -147,7 +141,7 @@ const checkPlaceholderTypeConsistency = (
     const filePath = join(localeDir, file);
     
     try {
-      const content = readFileSync(filePath, 'utf-8');
+      const content = await readFile(filePath, 'utf-8');
       const localeData: LocaleData = JSON.parse(content);
       
       localeMessages[file] = {};
@@ -255,7 +249,7 @@ ${conflictDescriptions}
 };
 
 // Message file generation function
-const generateMessageFile = (options: Required<TypedMessagePluginOptions>, rootDir: string) => {
+const generateMessageFile = async (options: Required<TypedMessagePluginOptions>, rootDir: string): Promise<void> => {
   try {
     const localeDir = resolve(rootDir, options.localeDir);
     const outputPath = resolve(rootDir, options.outputPath);
@@ -267,8 +261,8 @@ const generateMessageFile = (options: Required<TypedMessagePluginOptions>, rootD
     }
 
     // Read JSON files
-    const localeFiles = getLocaleFiles(localeDir, options.fallbackPriorityOrder);
-    const { aggregatedMessages, warnings, invalidFiles } = checkPlaceholderTypeConsistency(localeFiles, localeDir);
+    const localeFiles = await getLocaleFiles(localeDir, options.fallbackPriorityOrder);
+    const { aggregatedMessages, warnings, invalidFiles } = await checkPlaceholderTypeConsistency(localeFiles, localeDir);
     
     // Generate TypeScript code
     const tsCode = generateTypeScriptCode(aggregatedMessages, warnings, invalidFiles);
@@ -276,11 +270,11 @@ const generateMessageFile = (options: Required<TypedMessagePluginOptions>, rootD
     // Create output directory
     const outputDir = dirname(outputPath);
     if (!existsSync(outputDir)) {
-      mkdirSync(outputDir, { recursive: true });
+      await mkdir(outputDir, { recursive: true });
     }
     
     // Write file
-    writeFileSync(outputPath, tsCode, 'utf-8');
+    await writeFile(outputPath, tsCode, 'utf-8');
     
     console.log(`Generated typed messages: ${outputPath} (${Object.keys(aggregatedMessages).length} keys)`);
     
@@ -301,18 +295,25 @@ const generateMessageFile = (options: Required<TypedMessagePluginOptions>, rootD
 };
 
 // Get locale file list
-const getLocaleFiles = (localeDir: string, fallbackPriorityOrder: string[]): string[] => {
+const getLocaleFiles = async (localeDir: string, fallbackPriorityOrder: string[]): Promise<string[]> => {
   if (!existsSync(localeDir)) {
     return [];
   }
   
-  return readdirSync(localeDir)
-    .filter(file => {
-      const filePath = join(localeDir, file);
-      const isFile = statSync(filePath).isFile();
-      const isJson = extname(file) === '.json';
-      return isFile && isJson;
-    })
+  const files = await readdir(localeDir);
+  const filteredFiles: string[] = [];
+  
+  for (const file of files) {
+    const filePath = join(localeDir, file);
+    const stats = await stat(filePath);
+    const isFile = stats.isFile();
+    const isJson = extname(file) === '.json';
+    if (isFile && isJson) {
+      filteredFiles.push(file);
+    }
+  }
+  
+  return filteredFiles
     .sort((a, b) => {
       // Get filename without extension
       const aBase = basename(a, '.json');
@@ -395,6 +396,13 @@ ${messageItems}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
+// Default options
+const defaultOptions: Required<TypedMessagePluginOptions> = {
+  localeDir: 'locale',
+  outputPath: 'src/generated/messages.ts',
+  fallbackPriorityOrder: ['en', 'fallback'],
+};
+
 /**
  * Vite plugin for automatic generation of type-safe internationalization messages
  * 
@@ -433,19 +441,19 @@ const typedMessage = (options: TypedMessagePluginOptions = {}): Plugin => {
   
   return {
     name: 'typed-message',
-    configResolved(config) {
+    configResolved: (config) => {
       rootDir = config.root || process.cwd();
       console.log(`TypedMessage plugin initialized. Locale dir: ${opts.localeDir}, Output: ${opts.outputPath}`);
     },
-    buildStart() {
+    buildStart: () => {
       // Generate message file at build start
-      generateMessageFile(opts, rootDir);
+      return generateMessageFile(opts, rootDir);
     },
-    handleHotUpdate({ file, server }) {
+    handleHotUpdate: async ({ file, server }) => {
       // Handle hot reload
       if (file.includes(opts.localeDir)) {
         console.log('Locale file changed, regenerating messages...');
-        generateMessageFile(opts, rootDir);
+        await generateMessageFile(opts, rootDir);
         server.ws.send({
           type: 'full-reload',
         });

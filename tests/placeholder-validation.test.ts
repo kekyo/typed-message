@@ -1,17 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { existsSync, writeFileSync, readFileSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
-import { typedMessagePlugin } from '../src/vite-plugin';
+import { tmpdir } from 'os';
+import { randomUUID } from 'crypto';
+import typedMessage from '../src/vite-plugin';
 
 describe('Placeholder Type Validation', () => {
-  const testDir = join(process.cwd(), 'test-temp-validation');
+  const testDir = join(tmpdir(), 'test-temp-validation', randomUUID());
   const localeDir = join(testDir, 'locale');
   const outputFile = join(testDir, 'src', 'generated', 'messages.ts');
 
   // Helper function to call plugin hook
-  function callPluginHook(hook: any, ...args: any[]) {
+  async function callPluginHook(hook: any, ...args: any[]) {
     if (typeof hook === 'function') {
-      return hook(...args);
+      return await hook(...args);
     }
   }
 
@@ -30,7 +32,7 @@ describe('Placeholder Type Validation', () => {
     }
   });
 
-  it('should detect placeholder type conflicts between locales', () => {
+  it('should detect placeholder type conflicts between locales', async () => {
     // Create test locale files with type conflicts
     const fallbackData = {
       WELCOME_USER: 'Hello {firstName} {lastName}, you are {age:number} years old!',
@@ -54,15 +56,15 @@ describe('Placeholder Type Validation', () => {
     writeFileSync(join(localeDir, 'en.json'), JSON.stringify(enData, null, 2));
     writeFileSync(join(localeDir, 'ja.json'), JSON.stringify(jaData, null, 2));
 
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts',
       fallbackPriorityOrder: ['fallback', 'en', 'ja']
     });
 
     const mockConfig = { root: testDir };
-    callPluginHook(plugin.configResolved, mockConfig);
-    callPluginHook(plugin.buildStart);
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
 
     // Check that the file was generated
     expect(existsSync(outputFile)).toBe(true);
@@ -76,7 +78,7 @@ describe('Placeholder Type Validation', () => {
     expect(generatedCode).toContain('count: fallback.json: number, en.json: boolean, ja.json: date');
   });
 
-  it('should handle implicit types correctly', () => {
+  it('should handle implicit types correctly', async () => {
     // Create test files with implicit vs explicit types
     const fallbackData = {
       IMPLICIT_TEST: 'Order {orderId} for {amount} dollars is {status}', // all implicit (string)
@@ -89,15 +91,15 @@ describe('Placeholder Type Validation', () => {
     writeFileSync(join(localeDir, 'fallback.json'), JSON.stringify(fallbackData, null, 2));
     writeFileSync(join(localeDir, 'en.json'), JSON.stringify(enData, null, 2));
 
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts',
       fallbackPriorityOrder: ['fallback', 'en']
     });
 
     const mockConfig = { root: testDir };
-    callPluginHook(plugin.configResolved, mockConfig);
-    callPluginHook(plugin.buildStart);
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
 
     const generatedCode = readFileSync(outputFile, 'utf-8');
 
@@ -112,7 +114,7 @@ describe('Placeholder Type Validation', () => {
     expect(generatedCode).toContain('amount: fallback.json: string, en.json: number');
   });
 
-  it('should handle invalid JSON files and generate warnings', () => {
+  it('should handle invalid JSON files and generate warnings', async () => {
     // Create valid and invalid JSON files
     const validData = {
       VALID_KEY: 'Valid message {param:number}',
@@ -122,14 +124,14 @@ describe('Placeholder Type Validation', () => {
     writeFileSync(join(localeDir, 'invalid.json'), '{ invalid: json syntax }');
     writeFileSync(join(localeDir, 'broken.json'), '{ "unclosed": quote');
 
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts'
     });
 
     const mockConfig = { root: testDir };
-    callPluginHook(plugin.configResolved, mockConfig);
-    callPluginHook(plugin.buildStart);
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
 
     expect(existsSync(outputFile)).toBe(true);
 
@@ -145,7 +147,7 @@ describe('Placeholder Type Validation', () => {
     expect(generatedCode).toContain('VALID_KEY');
   });
 
-  it('should not generate warnings when all types are consistent', () => {
+  it('should not generate warnings when all types are consistent', async () => {
     // Create test files with consistent types
     const fallbackData = {
       CONSISTENT_MESSAGE: 'User {userId:number} has {balance:number} points',
@@ -158,14 +160,14 @@ describe('Placeholder Type Validation', () => {
     writeFileSync(join(localeDir, 'fallback.json'), JSON.stringify(fallbackData, null, 2));
     writeFileSync(join(localeDir, 'en.json'), JSON.stringify(enData, null, 2));
 
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts'
     });
 
     const mockConfig = { root: testDir };
-    callPluginHook(plugin.configResolved, mockConfig);
-    callPluginHook(plugin.buildStart);
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
 
     const generatedCode = readFileSync(outputFile, 'utf-8');
 
@@ -174,7 +176,7 @@ describe('Placeholder Type Validation', () => {
     expect(generatedCode).toContain('CONSISTENT_MESSAGE');
   });
 
-  it('should detect conflicts between implicit string and explicit types', () => {
+  it('should detect conflicts between implicit string and explicit types', async () => {
     // Create test files with string vs explicit type conflicts
     const fallbackData = {
       DATE_MESSAGE: 'Today is {date} and temperature is {temp:number}°C', // date is implicit string
@@ -189,15 +191,15 @@ describe('Placeholder Type Validation', () => {
     writeFileSync(join(localeDir, 'fallback.json'), JSON.stringify(fallbackData, null, 2));
     writeFileSync(join(localeDir, 'en.json'), JSON.stringify(enData, null, 2));
 
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts',
       fallbackPriorityOrder: ['fallback', 'en']
     });
 
     const mockConfig = { root: testDir };
-    callPluginHook(plugin.configResolved, mockConfig);
-    callPluginHook(plugin.buildStart);
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
 
     expect(existsSync(outputFile)).toBe(true);
 
@@ -213,7 +215,7 @@ describe('Placeholder Type Validation', () => {
     expect(generatedCode).toContain('userId: boolean');
   });
 
-  it('should reproduce and fix the demo FORMATTED_DATE issue', () => {
+  it('should reproduce and fix the demo FORMATTED_DATE issue', async () => {
     // Reproduce the exact issue found in demo: ja.json uses string, others use date
     const fallbackData = {
       FORMATTED_DATE: 'FB:Today is {date:date} and the temperature is {temperature:number}°C',
@@ -231,15 +233,15 @@ describe('Placeholder Type Validation', () => {
     writeFileSync(join(localeDir, 'en.json'), JSON.stringify(enData, null, 2));
     writeFileSync(join(localeDir, 'ja.json'), JSON.stringify(jaData, null, 2));
 
-    const plugin = typedMessagePlugin({
+    const plugin = typedMessage({
       localeDir: 'locale',
       outputPath: 'src/generated/messages.ts',
       fallbackPriorityOrder: ['ja', 'en', 'fallback']
     });
 
     const mockConfig = { root: testDir };
-    callPluginHook(plugin.configResolved, mockConfig);
-    callPluginHook(plugin.buildStart);
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
 
     expect(existsSync(outputFile)).toBe(true);
 
@@ -253,4 +255,4 @@ describe('Placeholder Type Validation', () => {
     expect(generatedCode).toContain('date: Date');
     expect(generatedCode).toContain('temperature: number');
   });
-}); 
+});
