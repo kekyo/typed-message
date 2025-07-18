@@ -8,7 +8,7 @@ TypeScript+React+Viteでタイプセーフな国際化メッセージを提供�
 
 [(English language is here.)](./README.md)
 
-## 特徴
+## これは何？
 
 Reactで、国際化されるメッセージの生成や出力を行う時に、厳密に型指定されたパラメータを指定できたら良いなと考えたことはありますか？
 
@@ -59,6 +59,11 @@ const formatted = getMessage(
 - フォールバックメッセージの自動集約 - メッセージが見つからない場合のフォールバックメッセージを指定可能
 - パラメータ付きメッセージ - プレースホルダーを使った動的メッセージフォーマット（型安全）
 - Vite最適化 - Viteプラグインによる自動コード生成
+
+### 環境
+
+- Node.js: 18.0.0 or higher
+- Vite: 5.x or 6.x (Note: Vite 7.x requires Node.js 20.19.0+)
 
 ----
 

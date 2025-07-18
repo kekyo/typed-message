@@ -8,7 +8,7 @@ A library for providing type-safe internationalized messages on TypeScript + Rea
 
 [(日本語はこちら)](./README_ja.md)
 
-## Features
+## What is this?
 
 Have you ever thought that it would be nice to be able to specify strictly typed parameters when generating and outputting internationalized messages in React?
 
@@ -58,6 +58,11 @@ Parameter type extraction is done automatically by the Vite plugin. This means y
 - Automatic Fallback Message Aggregation - Specify fallback messages for when a message is not found
 - Parameterized Messages - Dynamic message formatting using placeholders (type-safe)
 - Vite Optimized - Automatic code generation via Vite plugin
+
+### Requirements
+
+- Node.js: 18.0.0 or higher
+- Vite: 5.x or 6.x (Note: Vite 7.x requires Node.js 20.19.0+)
 
 ----
 
