@@ -8,7 +8,7 @@ TypeScript+React+Viteでタイプセーフな国際化メッセージを提供�
 
 [(English language is here.)](./README.md)
 
-## 特徴
+## これは何？
 
 Reactで、国際化されるメッセージの生成や出力を行う時に、厳密に型指定されたパラメータを指定できたら良いなと考えたことはありますか？
 
@@ -60,6 +60,11 @@ const formatted = getMessage(
 - パラメータ付きメッセージ - プレースホルダーを使った動的メッセージフォーマット（型安全）
 - Vite最適化 - Viteプラグインによる自動コード生成
 
+### 環境
+
+- Node.js: 18.0.0 or higher
+- Vite: 5.x or 6.x (Note: Vite 7.x requires Node.js 20.19.0+)
+
 ----
 
 ## インストール
@@ -72,17 +77,17 @@ npm install typed-message
 
 ### Viteプラグインの有効化
 
-`vite.config.ts`に`typedMessagePlugin()`を追加して下さい:
+`vite.config.ts`に`typedMessage()`を追加して下さい:
 
 ```typescript
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
-import { typedMessagePlugin } from 'typed-message/vite'
+import typedMessage from 'typed-message/vite'
 
 export default defineConfig({
   plugins: [
     react(),
-    typedMessagePlugin({
+    typedMessage({
       localeDir: 'locale',  // JSONファイルのディレクトリ
       outputPath: 'src/generated/messages.ts'  // 生成ファイルのパス
     })
@@ -93,7 +98,10 @@ export default defineConfig({
 ### ロケールファイルの作成
 
 プロジェクトルートに`locale`ディレクトリを作成し、JSONファイルを配置します。
-`fallback.json`は、その他のロケールファイルからメッセージが特定できない場合に参照されます。
+
+* JSONファイルは、実際には[JSON5形式](https://json5.org/)なので、コメントなどを入れることが出来ます。
+* JSONファイルの拡張子は `.json` または `.json5` のどちらでもOKです。両方存在する場合は `.json5` が優先されます。
+* `fallback.json`は、その他のロケールファイルからメッセージが特定できない場合に参照されます。
 
 #### 基本メッセージ
 
@@ -178,21 +186,21 @@ Reactのコンポーネントを使用して、エレメントに直接メッセ
 以下の例は、言語切り替えUIで、日本語と英語のメッセージ切り替えを実現します:
 
 ```tsx
-import React, { useState } from 'react'
-import { TypedMessageProvider, TypedMessage } from 'typed-message'
-import { messages } from './generated/messages'
+import React, { useState } from 'react';
+import { TypedMessageProvider, TypedMessage } from 'typed-message';
+import messages from './generated/messages';
 
 // ロケール辞書をインポート
-import enMessages from '../locale/en.json'
-import jaMessages from '../locale/ja.json'
+import enMessages from '../locale/en.json';
+import jaMessages from '../locale/ja.json';
 
 const App = () => {
-  const [locale, setLocale] = useState('en')
+  const [locale, setLocale] = useState('en');
 
   const localeMessages = {
     en: enMessages,
     ja: jaMessages
-  }
+  };
 
   return (
     <TypedMessageProvider messages={localeMessages[locale]}>
@@ -232,10 +240,10 @@ const App = () => {
         </select>
       </div>
     </TypedMessageProvider>
-  )
-}
+  );
+};
 
-export default App
+export default App;
 ```
 
 `TypedMessageProvider`へのメッセージ辞書の供給方法は自由に決定できます。上記の例ではTypeScriptの`import`を使用して、直接ソースコード上にJSON辞書を挿入しましたが、外部サーバーからダウンロードして設定するなど、様々な手法が考えられます。
@@ -243,13 +251,13 @@ export default App
 #### useTypedMessageフックを直接使用する場合
 
 ```tsx
-import React, { useState } from 'react'
-import { TypedMessageProvider, useTypedMessage } from 'typed-message'
-import { messages } from './generated/messages'
+import React, { useState } from 'react';
+import { TypedMessageProvider, useTypedMessage } from 'typed-message';
+import messages from './generated/messages';
 
 // ロケール辞書をインポート
-import enMessages from '../locale/en.json'
-import jaMessages from '../locale/ja.json'
+import enMessages from '../locale/en.json';
+import jaMessages from '../locale/ja.json';
 
 const MyComponent = () => {
   const getMessage = useTypedMessage();
@@ -265,8 +273,8 @@ const MyComponent = () => {
       <p>{getMessage(messages.ITEM_COUNT, { count: 5, itemType: "apples" })}</p>
       <p>{getMessage(messages.FORMATTED_DATE, { date: new Date(), temp: 18 })}</p>
     </div>
-  )
-}
+  );
+};
 
 const App = () => {
   const [locale, setLocale] = useState('en');
@@ -274,7 +282,7 @@ const App = () => {
   const localeMessages = {
     en: enMessages,
     ja: jaMessages
-  }
+  };
 
   return (
     <TypedMessageProvider messages={localeMessages[locale]}>
@@ -286,10 +294,10 @@ const App = () => {
         <option value="ja">日本語</option>
       </select>
     </TypedMessageProvider>
-  )
-}
+  );
+};
 
-export default App
+export default App;
 ```
 
 ----
@@ -375,14 +383,14 @@ ViteプラグインでJSONからTypeScriptコードを生成します。プレ�
 #### 使用例
 
 ```typescript
-import { typedMessagePlugin } from 'typed-message/vite'
+import typedMessage from 'typed-message/vite';
 
-typedMessagePlugin({
+typedMessage({
   localeDir: 'locale',
   outputPath: 'src/generated/messages.ts',
   // 優先順序: ja.json, en.json, fallback.jsonの順にメッセージを検索する
   fallbackPriorityOrder: ['ja', 'en', 'fallback']
-})
+});
 ```
 
 #### フォールバック優先順序の制御
@@ -390,14 +398,14 @@ typedMessagePlugin({
 `fallbackPriorityOrder`オプションで、フォールバックメッセージの優先順序を制御できます：
 
 ```typescript
-import { typedMessagePlugin } from 'typed-message/vite'
+import typedMessage from 'typed-message/vite';
 
-typedMessagePlugin({
+typedMessage({
   localeDir: 'locale',
   outputPath: 'src/generated/messages.ts',
   // 優先順序: ja.json, en.json, fallback.jsonの順にメッセージを検索する
   fallbackPriorityOrder: ['ja', 'en', 'fallback']
-})
+});
 ```
 
 - 配列の**最後の要素に向かって**フォールバックメッセージが検索されます
@@ -434,13 +442,13 @@ interface MessageItem<T extends Record<string, any>> {
 TypedMessageProviderからメッセージ取得関数を取得するフック。この関数はメッセージアイテムを受け取り、辞書からメッセージを検索して、見つからない場合はfallbackテンプレートを使用します。
 
 ```typescript
-const getMessage = useTypedMessage()
+const getMessage = useTypedMessage();
 
 // 引数なしメッセージ取得
-const simpleResult = getMessage(simpleMessage)
+const simpleResult = getMessage(simpleMessage);
 
 // パラメータ付きメッセージ取得（オブジェクト形式）
-const paramResult = getMessage(paramMessage, { name: "太郎", age: 30 })
+const paramResult = getMessage(paramMessage, { name: "太郎", age: 30 });
 ```
 
 ## 高度な機能

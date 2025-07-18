@@ -1,24 +1,24 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 // Alias setting in vite.config.ts allows using 'typed-message' package name
-import { TypedMessageProvider, TypedMessage, useTypedMessage } from 'typed-message'
-import { messages } from './generated/messages'
-import './App.css'
+import { TypedMessage, TypedMessageProvider, useTypedMessage } from 'typed-message';
+import messages from './generated/messages';
+import './App.css';
 
 // Import locale dictionaries
-import enMessages from '../locale/en.json'
-import jaMessages from '../locale/ja.json'
+import enMessages from '../locale/en.json';
+import jaMessages from '../locale/ja.json';
 
-type Locale = 'en' | 'ja'
+type Locale = 'en' | 'ja';
 
 const localeMessages = {
   en: enMessages,
   ja: jaMessages,
-}
+};
 
 const localeNames = {
   en: 'English',
   ja: 'Japanese',
-}
+};
 
 // Formatter functionality demo component
 const FormatterDemo: React.FC = () => {

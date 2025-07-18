@@ -1,6 +1,13 @@
+// typed-message - Type-safe internationalization library for React and TypeScript
+// Copyright (c) Kouji Matsui (@kekyo@mi.kekyo.net)
+// Under MIT
+// https://github.com/kekyo/typed-message
+
 import type { Plugin } from 'vite';
-import { readFileSync, existsSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync } from 'fs';
+import { readFile, readdir, stat, writeFile, mkdir } from 'fs/promises';
 import { join, resolve, dirname, extname, basename } from 'path';
+import JSON5 from 'json5';
 import type { PlaceholderInfo, ParsedMessage } from './types';
 
 /**
@@ -12,13 +19,13 @@ import type { PlaceholderInfo, ParsedMessage } from './types';
  * 
  * @example
  * ```typescript
- * import { typedMessagePlugin } from 'typed-message/vite';
+ * import typedMessage from 'typed-message/vite';
  * 
  * // Basic usage with defaults
- * typedMessagePlugin()
+ * typedMessage()
  * 
  * // Custom configuration
- * typedMessagePlugin({
+ * typedMessage({
  *   localeDir: 'public/locales',
  *   outputPath: 'src/i18n/messages.ts',
  *   fallbackPriorityOrder: ['ja', 'en', 'fallback']
@@ -43,13 +50,6 @@ export interface TypedMessagePluginOptions {
    */
   fallbackPriorityOrder?: string[];
 }
-
-// Default options
-const defaultOptions: Required<TypedMessagePluginOptions> = {
-  localeDir: 'locale',
-  outputPath: 'src/generated/messages.ts',
-  fallbackPriorityOrder: ['en', 'fallback'],
-};
 
 // Locale file type definition (simplified)
 interface LocaleData {
@@ -77,7 +77,7 @@ interface MessageWarning {
 const PLACEHOLDER_REGEX = /\{(\w+)(?::(\w+))?\}/g;
 
 // Function to parse placeholders
-const parsePlaceholders = (message: string): PlaceholderInfo[] => {
+const parsePlaceholders = (message: string) => {
   const placeholders: PlaceholderInfo[] = [];
   let match;
   let position = 0;
@@ -108,7 +108,7 @@ const parseMessage = (key: string, messageData: string, fallback: string): Parse
 }
 
 // Generate TypeScript named tuple type string
-const generateObjectTypeString = (placeholders: PlaceholderInfo[]): string => {
+const generateObjectTypeString = (placeholders: PlaceholderInfo[]) => {
   if (placeholders.length === 0) {
     return '{}';
   }
@@ -129,10 +129,10 @@ const generateObjectTypeString = (placeholders: PlaceholderInfo[]): string => {
 }
 
 // Function to check placeholder type consistency across locales
-const checkPlaceholderTypeConsistency = (
+const checkPlaceholderTypeConsistency = async (
   localeFiles: string[], 
   localeDir: string
-): { aggregatedMessages: AggregatedMessages; warnings: MessageWarning[]; invalidFiles: string[] } => {
+) => {
   // Analyze messages in each locale file individually
   const localeMessages: { [localeFile: string]: { [key: string]: ParsedMessage } } = {};
   const allMessageKeys = new Set<string>();
@@ -142,8 +142,8 @@ const checkPlaceholderTypeConsistency = (
     const filePath = join(localeDir, file);
     
     try {
-      const content = readFileSync(filePath, 'utf-8');
-      const localeData: LocaleData = JSON.parse(content);
+      const content = await readFile(filePath, 'utf-8');
+      const localeData: LocaleData = JSON5.parse(content);
       
       localeMessages[file] = {};
       
@@ -232,7 +232,7 @@ const checkPlaceholderTypeConsistency = (
   }
   
   return { aggregatedMessages, warnings, invalidFiles };
-}
+};
 
 // Function to generate JSDoc comments for warnings
 const generateWarningJSDoc = (warning: MessageWarning): string => {
@@ -247,69 +247,10 @@ const generateWarningJSDoc = (warning: MessageWarning): string => {
    * Warning: Placeholder types do not match across locales
 ${conflictDescriptions}
    */`;
-}
-
-/**
- * Vite plugin for automatic generation of type-safe internationalization messages
- * 
- * This plugin scans JSON locale files, analyzes message patterns and placeholders,
- * then generates TypeScript code with proper type definitions. It supports:
- * - Automatic placeholder detection and type inference
- * - Hot reload during development when locale files change
- * - Configurable fallback priority order
- * - Generation of both SimpleMessageItem and MessageItem types
- * 
- * The generated code provides compile-time type safety for message keys and parameters,
- * ensuring that parameterized messages receive the correct argument types.
- * 
- * @param options - Plugin configuration options
- * @returns Vite plugin instance with build-time code generation and hot reload support
- * 
- * @example
- * ```typescript
- * // vite.config.ts
- * import { defineConfig } from 'vite';
- * import { typedMessagePlugin } from 'typed-message/vite';
- * 
- * export default defineConfig({
- *   plugins: [
- *     typedMessagePlugin({
- *       localeDir: 'locale',
- *       outputPath: 'src/generated/messages.ts'
- *     })
- *   ]
- * });
- * ```
- */
-export const typedMessagePlugin = (options: TypedMessagePluginOptions = {}): Plugin => {
-  const opts = { ...defaultOptions, ...options };
-  let rootDir = '';
-  
-  return {
-    name: 'typed-message',
-    configResolved(config) {
-      rootDir = config.root || process.cwd();
-      console.log(`TypedMessage plugin initialized. Locale dir: ${opts.localeDir}, Output: ${opts.outputPath}`);
-    },
-    buildStart() {
-      // Generate message file at build start
-      generateMessageFile(opts, rootDir);
-    },
-    handleHotUpdate({ file, server }) {
-      // Handle hot reload
-      if (file.includes(opts.localeDir)) {
-        console.log('Locale file changed, regenerating messages...');
-        generateMessageFile(opts, rootDir);
-        server.ws.send({
-          type: 'full-reload',
-        });
-      }
-    },
-  };
 };
 
 // Message file generation function
-const generateMessageFile = (options: Required<TypedMessagePluginOptions>, rootDir: string) => {
+const generateMessageFile = async (options: Required<TypedMessagePluginOptions>, rootDir: string): Promise<void> => {
   try {
     const localeDir = resolve(rootDir, options.localeDir);
     const outputPath = resolve(rootDir, options.outputPath);
@@ -321,8 +262,8 @@ const generateMessageFile = (options: Required<TypedMessagePluginOptions>, rootD
     }
 
     // Read JSON files
-    const localeFiles = getLocaleFiles(localeDir, options.fallbackPriorityOrder);
-    const { aggregatedMessages, warnings, invalidFiles } = checkPlaceholderTypeConsistency(localeFiles, localeDir);
+    const localeFiles = await getLocaleFiles(localeDir, options.fallbackPriorityOrder);
+    const { aggregatedMessages, warnings, invalidFiles } = await checkPlaceholderTypeConsistency(localeFiles, localeDir);
     
     // Generate TypeScript code
     const tsCode = generateTypeScriptCode(aggregatedMessages, warnings, invalidFiles);
@@ -330,11 +271,11 @@ const generateMessageFile = (options: Required<TypedMessagePluginOptions>, rootD
     // Create output directory
     const outputDir = dirname(outputPath);
     if (!existsSync(outputDir)) {
-      mkdirSync(outputDir, { recursive: true });
+      await mkdir(outputDir, { recursive: true });
     }
     
     // Write file
-    writeFileSync(outputPath, tsCode, 'utf-8');
+    await writeFile(outputPath, tsCode, 'utf-8');
     
     console.log(`Generated typed messages: ${outputPath} (${Object.keys(aggregatedMessages).length} keys)`);
     
@@ -352,25 +293,46 @@ const generateMessageFile = (options: Required<TypedMessagePluginOptions>, rootD
   } catch (error) {
     console.error('Error generating message file:', error);
   }
-}
+};
 
 // Get locale file list
-const getLocaleFiles = (localeDir: string, fallbackPriorityOrder: string[]): string[] => {
+const getLocaleFiles = async (localeDir: string, fallbackPriorityOrder: string[]): Promise<string[]> => {
   if (!existsSync(localeDir)) {
     return [];
   }
   
-  return readdirSync(localeDir)
-    .filter(file => {
-      const filePath = join(localeDir, file);
-      const isFile = statSync(filePath).isFile();
-      const isJson = extname(file) === '.json';
-      return isFile && isJson;
-    })
+  const files = await readdir(localeDir);
+  const fileMap = new Map<string, string>();
+  
+  for (const file of files) {
+    const filePath = join(localeDir, file);
+    const stats = await stat(filePath);
+    const isFile = stats.isFile();
+    const ext = extname(file);
+    const isJson = ext === '.json';
+    const isJson5 = ext === '.json5';
+    
+    if (isFile && (isJson || isJson5)) {
+      const baseName = basename(file, ext);
+      
+      // If json5 file exists, it takes priority over json
+      if (isJson5) {
+        fileMap.set(baseName, file);
+      } else if (isJson && !fileMap.has(baseName)) {
+        fileMap.set(baseName, file);
+      }
+    }
+  }
+  
+  const filteredFiles = Array.from(fileMap.values());
+  
+  return filteredFiles
     .sort((a, b) => {
       // Get filename without extension
-      const aBase = basename(a, '.json');
-      const bBase = basename(b, '.json');
+      const aExt = extname(a);
+      const bExt = extname(b);
+      const aBase = basename(a, aExt);
+      const bBase = basename(b, bExt);
 
       // Get index in fallbackPriorityOrder array (-1 if not found)
       const aIndex = fallbackPriorityOrder.indexOf(aBase);
@@ -394,7 +356,7 @@ const getLocaleFiles = (localeDir: string, fallbackPriorityOrder: string[]): str
       // If neither is in fallbackPriorityOrder (alphabetical order)
       return a.localeCompare(b);
     });
-}
+};
 
 // TypeScript code generation
 const generateTypeScriptCode = (messages: AggregatedMessages, warnings: MessageWarning[], invalidFiles: string[]): string => {
@@ -444,8 +406,86 @@ import type { MessageItem, SimpleMessageItem } from 'typed-message';
 ${invalidFilesComment}export const messages = {
 ${messageItems}
 } as const;
-`;
-}
 
-// Plugin standalone export (for separate entry point)
-export default typedMessagePlugin;
+export default messages;
+`;
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+// Default options
+const defaultOptions: Required<TypedMessagePluginOptions> = {
+  localeDir: 'locale',
+  outputPath: 'src/generated/messages.ts',
+  fallbackPriorityOrder: ['en', 'fallback'],
+};
+
+/**
+ * Vite plugin for automatic generation of type-safe internationalization messages
+ * 
+ * This plugin scans JSON locale files, analyzes message patterns and placeholders,
+ * then generates TypeScript code with proper type definitions. It supports:
+ * - Automatic placeholder detection and type inference
+ * - Hot reload during development when locale files change
+ * - Configurable fallback priority order
+ * - Generation of both SimpleMessageItem and MessageItem types
+ * 
+ * The generated code provides compile-time type safety for message keys and parameters,
+ * ensuring that parameterized messages receive the correct argument types.
+ * 
+ * @param options - Plugin configuration options
+ * @returns Vite plugin instance with build-time code generation and hot reload support
+ * 
+ * @example
+ * ```typescript
+ * // vite.config.ts
+ * import { defineConfig } from 'vite';
+ * import typedMessage from 'typed-message/vite';
+ * 
+ * export default defineConfig({
+ *   plugins: [
+ *     typedMessage({
+ *       localeDir: 'locale',
+ *       outputPath: 'src/generated/messages.ts'
+ *     })
+ *   ]
+ * });
+ * ```
+ */
+const typedMessage = (options: TypedMessagePluginOptions = {}): Plugin => {
+  const opts = { ...defaultOptions, ...options };
+  let rootDir = '';
+  
+  return {
+    name: 'typed-message',
+    configResolved: (config) => {
+      rootDir = config.root || process.cwd();
+      console.log(`TypedMessage plugin initialized. Locale dir: ${opts.localeDir}, Output: ${opts.outputPath}`);
+    },
+    buildStart: () => {
+      // Generate message file at build start
+      return generateMessageFile(opts, rootDir);
+    },
+    handleHotUpdate: async ({ file, server }) => {
+      // Handle hot reload
+      if (file.includes(opts.localeDir)) {
+        console.log('Locale file changed, regenerating messages...');
+        await generateMessageFile(opts, rootDir);
+        server.ws.send({
+          type: 'full-reload',
+        });
+      }
+    },
+  };
+};
+
+/**
+ * Backward compatibility symbol, use `typedMessage` default symbol instead.
+ * @deprecated Backward compatibility symbol, use `typedMessage` default symbol instead.
+ */
+export const typedMessagePlugin = typedMessage;
+
+/**
+ * Plugin standalone export (for separate entry point)
+ */
+export default typedMessage;
