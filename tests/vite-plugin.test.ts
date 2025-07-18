@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { writeFileSync, mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { typedMessagePlugin } from '../src/vite-plugin';
-import type { Plugin } from 'vite';
 
 // Temporary directory for testing
 const testDir = join(process.cwd(), 'test-temp');
