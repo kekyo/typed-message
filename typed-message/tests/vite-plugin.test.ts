@@ -310,7 +310,7 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).toContain('fallback: "Unquoted keys work too"');
   });
 
-  it('prioritizes JSON5 files over JSON files with same base name', async () => {
+  it.each(['json5', 'jsonc'])('prioritizes JSON5/JSONC files over JSON files with same base name', async ext => {
     // Create both JSON and JSON5 files with same base name
     const jsonData = {
       TITLE: 'JSON Title',
@@ -324,7 +324,7 @@ describe('typedMessagePlugin', () => {
     }`;
     
     writeFileSync(join(localeDir, 'en.json'), JSON.stringify(jsonData, null, 2));
-    writeFileSync(join(localeDir, 'en.json5'), json5Content);
+    writeFileSync(join(localeDir, `en.${ext}`), json5Content);
     
     const plugin = typedMessage({
       localeDir: 'locale',
@@ -349,7 +349,7 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).not.toContain('key: "JSON_ONLY"');
   });
 
-  it('handles mixed JSON and JSON5 files correctly', async () => {
+  it.each(['json5', 'jsonc'])('handles mixed JSON and JSON5/JSONC files correctly', async ext => {
     // Create mix of JSON and JSON5 files
     const enJsonData = {
       EN_KEY: 'English JSON'
@@ -365,7 +365,7 @@ describe('typedMessagePlugin', () => {
     };
     
     writeFileSync(join(localeDir, 'en.json'), JSON.stringify(enJsonData, null, 2));
-    writeFileSync(join(localeDir, 'ja.json5'), jaJson5Content);
+    writeFileSync(join(localeDir, `ja.${ext}`), jaJson5Content);
     writeFileSync(join(localeDir, 'fr.json'), JSON.stringify(frJsonData, null, 2));
     
     const plugin = typedMessage({
