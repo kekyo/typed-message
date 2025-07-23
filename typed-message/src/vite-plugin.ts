@@ -303,27 +303,27 @@ const getLocaleFiles = async (localeDir: string, fallbackPriorityOrder: string[]
   
   const files = await readdir(localeDir);
   const fileMap = new Map<string, string>();
-  
-  for (const file of files) {
+
+  for (const file of files.sort().reverse()) {
     const filePath = join(localeDir, file);
     const stats = await stat(filePath);
     const isFile = stats.isFile();
     const ext = extname(file);
     const isJson = ext === '.json';
+    const isJsonc = ext === '.jsonc';
     const isJson5 = ext === '.json5';
-    
-    if (isFile && (isJson || isJson5)) {
-      const baseName = basename(file, ext);
-      
-      // If json5 file exists, it takes priority over json
-      if (isJson5) {
-        fileMap.set(baseName, file);
-      } else if (isJson && !fileMap.has(baseName)) {
-        fileMap.set(baseName, file);
+
+    if (isFile && (isJson5 || isJsonc || isJson)) {
+      const bn = basename(file, ext);
+      // Apply priority: json5 > jsonc > json
+      if (!fileMap.has(bn) || 
+          (ext === '.json5') ||
+          (ext === '.jsonc' && extname(fileMap.get(bn)!) === '.json')) {
+        fileMap.set(bn, file);
       }
     }
   }
-  
+
   const filteredFiles = Array.from(fileMap.values());
   
   return filteredFiles

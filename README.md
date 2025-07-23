@@ -99,7 +99,7 @@ export default defineConfig({
 Create a `locale` directory in your project root and place JSON files in it.
 
 * The JSON file is actually in [JSON5 format](https://json5.org/), so comments and other information can be included.
-* JSON file extension can be either `.json` or `.json5`. If both exist, `.json5` is preferred.
+* JSON file extensions can be `.json5`, `.jsonc`, or `.json`. If more than one file exists, `.json5`, `.jsonc`, and `.json` are given priority in that order.
 * `fallback.json` is referenced when messages cannot be found in other locale files.
 
 #### Basic Messages

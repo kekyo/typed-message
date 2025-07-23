@@ -100,7 +100,7 @@ export default defineConfig({
 プロジェクトルートに`locale`ディレクトリを作成し、JSONファイルを配置します。
 
 * JSONファイルは、実際には[JSON5形式](https://json5.org/)なので、コメントなどを入れることが出来ます。
-* JSONファイルの拡張子は `.json` または `.json5` のどちらでもOKです。両方存在する場合は `.json5` が優先されます。
+* JSONファイルの拡張子は `.json5`, `.jsonc`, `.json` のいずれでもOKです。複数存在する場合は `.json5`, `.jsonc`, `.json` の順に優先されます。
 * `fallback.json`は、その他のロケールファイルからメッセージが特定できない場合に参照されます。
 
 #### 基本メッセージ
