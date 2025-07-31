@@ -35,6 +35,6 @@ pnpm-debug.log*
 # Generated files
 src/generated/
 
-test_results/
+artifacts/
 
-*.tgz
+test_results/

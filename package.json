@@ -1,6 +1,5 @@
 {
   "name": "typed-message-workspace",
-  "version": "1.0.0",
   "private": true,
   "description": "Workspace for typed-message library and demo",
   "workspaces": [
@@ -8,8 +7,9 @@
     "demo"
   ],
   "scripts": {
-    "build": "npm run build --workspace=typed-message && npm run build --workspace=demo",
-    "dev": "npm run dev --workspace=demo",
-    "test": "npm run test --workspace=typed-message"
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspace=typed-message",
+    "pack": "npm run pack --workspace=typed-message",
+    "dev": "npm run dev --workspace=demo"
   }
 }

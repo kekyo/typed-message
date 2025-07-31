@@ -2,9 +2,13 @@
 
 TypeScript+React+Viteでタイプセーフな国際化メッセージを提供するライブラリです。
 
-[![npm version](https://img.shields.io/npm/v/typed-message.svg)](https://github.com/kekyo/typed-message)
+![typed-message](images/typed-message-120-c.png)
+
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/kekyo/typed-message/actions/workflows/ci.yml/badge.svg)](https://github.com/kekyo/typed-message/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/typed-message.svg)](https://github.com/kekyo/typed-message)
+
+----
 
 [(English language is here.)](./README.md)
 

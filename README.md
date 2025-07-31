@@ -2,9 +2,12 @@
 
 A library for providing type-safe internationalized messages on TypeScript + React + Vite environment.
 
+![typed-message](images/typed-message-120-c.png)
+
 [![npm version](https://img.shields.io/npm/v/typed-message.svg)](https://www.npmjs.com/package/typed-message)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/kekyo/typed-message/actions/workflows/ci.yml/badge.svg)](https://github.com/kekyo/typed-message/actions/workflows/ci.yml)
+
+----
 
 [(日本語はこちら)](./README_ja.md)
 
