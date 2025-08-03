@@ -2,6 +2,7 @@
   "name": "typed-message-workspace",
   "private": true,
   "description": "Workspace for typed-message library and demo",
+  "readme": "README_pack.md",
   "workspaces": [
     "typed-message",
     "demo"
