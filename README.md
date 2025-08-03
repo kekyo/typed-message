@@ -4,8 +4,9 @@ A library for providing type-safe internationalized messages on TypeScript + Rea
 
 ![typed-message](images/typed-message-120-c.png)
 
-[![npm version](https://img.shields.io/npm/v/typed-message.svg)](https://www.npmjs.com/package/typed-message)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm version](https://img.shields.io/npm/v/typed-message.svg)](https://www.npmjs.com/package/typed-message)
 
 ----
 
