@@ -264,8 +264,20 @@ const checkPlaceholderTypeConsistency = async (
   return { aggregatedMessages, warnings, invalidFiles };
 };
 
+// Function to generate JSDoc comments for normal messages
+const generateNormalJSDoc = (fallback: string): string => {
+  const escapedFallback = fallback.replace(/\*/g, '\\*');
+  return `  /**
+   * Messgae: "${escapedFallback}"
+   */`;
+};
+
 // Function to generate JSDoc comments for warnings
-const generateWarningJSDoc = (warning: MessageWarning): string => {
+const generateWarningJSDoc = (
+  warning: MessageWarning,
+  fallback: string
+): string => {
+  const escapedFallback = fallback.replace(/\*/g, '\\*');
   const conflictDescriptions = warning.conflicts
     .map((conflict) => {
       const conflictDetails = conflict.conflicts
@@ -276,6 +288,7 @@ const generateWarningJSDoc = (warning: MessageWarning): string => {
     .join('\n');
 
   return `  /**
+   * Messgae: "${escapedFallback}"
    * Warning: Placeholder types do not match across locales
 ${conflictDescriptions}
    */`;
@@ -427,12 +440,15 @@ const generateTypeScriptCode = (
     .map(([key, message]) => {
       const escapedKey = JSON.stringify(key);
       const warning = warningMap.get(key);
-      const warningComment = warning ? generateWarningJSDoc(warning) : '';
+      const jsDocComment = warning
+        ? generateWarningJSDoc(warning, message.fallback)
+        : generateNormalJSDoc(message.fallback);
 
       if (message.placeholders.length === 0) {
         // SimpleMessageItem for non-parameterized messages
         const escapedFallback = JSON.stringify(message.fallback);
-        return `${warningComment}${warningComment ? '\n' : ''}  ${key}: { 
+        return `${jsDocComment}
+  ${key}: { 
     key: ${escapedKey}, 
     fallback: ${escapedFallback} 
   } as SimpleMessageItem`;
@@ -440,7 +456,8 @@ const generateTypeScriptCode = (
         // MessageItem for parameterized messages - use template string as fallback
         const escapedFallback = JSON.stringify(message.fallback);
         const typeString = generateObjectTypeString(message.placeholders);
-        return `${warningComment}${warningComment ? '\n' : ''}  ${key}: { 
+        return `${jsDocComment}
+  ${key}: { 
     key: ${escapedKey}, 
     fallback: ${escapedFallback} 
   } as MessageItem<${typeString}>`;

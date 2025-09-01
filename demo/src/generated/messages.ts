@@ -4,82 +4,142 @@
 import type { MessageItem, SimpleMessageItem } from 'typed-message';
 
 export const messages = {
+  /**
+   * Messgae: "TypedMessage Library Demo"
+   */
   TITLE: { 
     key: "TITLE", 
     fallback: "TypedMessage Library Demo" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "Type-safe Internationalization Message System"
+   */
   SUBTITLE: { 
     key: "SUBTITLE", 
     fallback: "Type-safe Internationalization Message System" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "This demo page allows you to experience the basic functionality of the typed-message library."
+   */
   DESCRIPTION: { 
     key: "DESCRIPTION", 
     fallback: "This demo page allows you to experience the basic functionality of the typed-message library." 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "Welcome to the typed-message library!"
+   */
   WELCOME_MESSAGE: { 
     key: "WELCOME_MESSAGE", 
     fallback: "Welcome to the typed-message library!" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "Change Language"
+   */
   CHANGE_LANGUAGE: { 
     key: "CHANGE_LANGUAGE", 
     fallback: "Change Language" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "Current Language"
+   */
   CURRENT_LANGUAGE: { 
     key: "CURRENT_LANGUAGE", 
     fallback: "Current Language" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "Sample Button"
+   */
   SAMPLE_BUTTON: { 
     key: "SAMPLE_BUTTON", 
     fallback: "Sample Button" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "Key Features"
+   */
   FEATURES_TITLE: { 
     key: "FEATURES_TITLE", 
     fallback: "Key Features" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "Type-safe with TypeScript"
+   */
   FEATURE_TYPE_SAFE: { 
     key: "FEATURE_TYPE_SAFE", 
     fallback: "Type-safe with TypeScript" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "Hot Reload Support"
+   */
   FEATURE_HOT_RELOAD: { 
     key: "FEATURE_HOT_RELOAD", 
     fallback: "Hot Reload Support" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "Priority-based Aggregation"
+   */
   FEATURE_PRIORITY: { 
     key: "FEATURE_PRIORITY", 
     fallback: "Priority-based Aggregation" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "Provided under MIT License"
+   */
   FOOTER_TEXT: { 
     key: "FOOTER_TEXT", 
     fallback: "Provided under MIT License" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "FB:Hello {firstName} {lastName}, you are {age:number} years old!"
+   */
   WELCOME_USER: { 
     key: "WELCOME_USER", 
     fallback: "FB:Hello {firstName} {lastName}, you are {age:number} years old!" 
   } as MessageItem<{ firstName: string; lastName: string; age: number }>,
+  /**
+   * Messgae: "FB:You have {count:number} {itemType} in your cart"
+   */
   ITEM_COUNT: { 
     key: "ITEM_COUNT", 
     fallback: "FB:You have {count:number} {itemType} in your cart" 
   } as MessageItem<{ count: number; itemType: string }>,
+  /**
+   * Messgae: "FB:Today is {date:date} and the temperature is {temperature:number}°C"
+   */
   FORMATTED_DATE: { 
     key: "FORMATTED_DATE", 
     fallback: "FB:Today is {date:date} and the temperature is {temperature:number}°C" 
   } as MessageItem<{ date: Date; temperature: number }>,
+  /**
+   * Messgae: "FB:Fallback Functionality Test"
+   */
   FALLBACK_ONLY_TITLE: { 
     key: "FALLBACK_ONLY_TITLE", 
     fallback: "FB:Fallback Functionality Test" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "FB:This message is only defined in fallback.json"
+   */
   FALLBACK_ONLY_MESSAGE: { 
     key: "FALLBACK_ONLY_MESSAGE", 
     fallback: "FB:This message is only defined in fallback.json" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "FB:Even when switching languages, the messages in this section will not change. This demonstrates that the fallback functionality is working correctly."
+   */
   FALLBACK_ONLY_DESCRIPTION: { 
     key: "FALLBACK_ONLY_DESCRIPTION", 
     fallback: "FB:Even when switching languages, the messages in this section will not change. This demonstrates that the fallback functionality is working correctly." 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "FB:Note: This message is not defined in en.json or ja.json"
+   */
   FALLBACK_ONLY_NOTE: { 
     key: "FALLBACK_ONLY_NOTE", 
     fallback: "FB:Note: This message is not defined in en.json or ja.json" 
   } as SimpleMessageItem,
+  /**
+   * Messgae: "FB:Fallback Demo {value:number}: {status}"
+   */
   FALLBACK_ONLY_DEMO: { 
     key: "FALLBACK_ONLY_DEMO", 
     fallback: "FB:Fallback Demo {value:number}: {status}" 
