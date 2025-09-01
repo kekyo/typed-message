@@ -63,6 +63,7 @@ const formatted = getMessage(
 - フォールバックメッセージの自動集約 - メッセージが見つからない場合のフォールバックメッセージを指定可能
 - パラメータ付きメッセージ - プレースホルダーを使った動的メッセージフォーマット（型安全）
 - Vite最適化 - Viteプラグインによる自動コード生成
+- JSDocコメント - 生成されたすべてのメッセージにフォールバックテキストを含むJSDocコメントを付与（IDE支援向上）
 
 ### 環境
 
@@ -492,9 +493,10 @@ Viteプラグインは異なるロケールファイル間でプレースホル�
 }
 ```
 
-**警告付きの生成されたTypeScriptコード：**
+**生成されたTypeScriptコード：**
 ```typescript
 /**
+ * Messgae: "User {userId:number} has {balance:number} points and status {isActive:boolean}"
  * Warning: Placeholder types do not match across locales
  * - userId: fallback.json: string, en.json: number, ja.json: boolean
  * - balance: fallback.json: number, en.json: number, ja.json: string

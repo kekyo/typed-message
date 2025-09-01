@@ -21,15 +21,17 @@ const ConditionalRenderingComponent: React.FC = () => {
   ]);
 
   const toggleItem = (id: number) => {
-    setItems(prev => prev.map(item => 
-      item.id === id ? { ...item, available: !item.available } : item
-    ));
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, available: !item.available } : item
+      )
+    );
   };
 
   return (
     <div>
       <div data-testid="messages">
-        {items.map(item => (
+        {items.map((item) => (
           <div key={item.id} data-testid={`item-${item.id}`}>
             {item.available ? (
               <TypedMessage message={item.msg} />
@@ -40,7 +42,7 @@ const ConditionalRenderingComponent: React.FC = () => {
         ))}
       </div>
       <div data-testid="controls">
-        {items.map(item => (
+        {items.map((item) => (
           <button
             key={item.id}
             data-testid={`toggle-${item.id}`}
@@ -56,8 +58,10 @@ const ConditionalRenderingComponent: React.FC = () => {
 
 // More complex conditional logic test
 const ComplexConditionalComponent: React.FC = () => {
-  const [condition, setCondition] = useState<'none' | 'first' | 'second' | 'both'>('none');
-  
+  const [condition, setCondition] = useState<
+    'none' | 'first' | 'second' | 'both'
+  >('none');
+
   return (
     <div>
       <div data-testid="result">
@@ -71,10 +75,15 @@ const ComplexConditionalComponent: React.FC = () => {
         )}
         {condition === 'none' && <span>Nothing displayed</span>}
       </div>
-      <button 
-        data-testid="change-condition" 
+      <button
+        data-testid="change-condition"
         onClick={() => {
-          const conditions: Array<'none' | 'first' | 'second' | 'both'> = ['none', 'first', 'second', 'both'];
+          const conditions: Array<'none' | 'first' | 'second' | 'both'> = [
+            'none',
+            'first',
+            'second',
+            'both',
+          ];
           const currentIndex = conditions.indexOf(condition);
           const nextIndex = (currentIndex + 1) % conditions.length;
           setCondition(conditions[nextIndex]);
@@ -89,7 +98,7 @@ const ComplexConditionalComponent: React.FC = () => {
 describe('TypedMessage with conditional rendering', () => {
   const testMessages = {
     MSG_1: 'Custom Message 1',
-    MSG_2: 'Custom Message 2', 
+    MSG_2: 'Custom Message 2',
     MSG_3: 'Custom Message 3',
   };
 
@@ -143,13 +152,19 @@ describe('TypedMessage with conditional rendering', () => {
     // Perform multiple state changes
     // Initial: item1=true, item2=false, item3=true
     // toggle-1: item1=false, item2=false, item3=true
-    // toggle-2: item1=false, item2=true, item3=true  
+    // toggle-2: item1=false, item2=true, item3=true
     // toggle-3: item1=false, item2=true, item3=false
     // toggle-1: item1=true, item2=true, item3=false
     // toggle-2: item1=true, item2=false, item3=false
-    const toggles = ['toggle-1', 'toggle-2', 'toggle-3', 'toggle-1', 'toggle-2'];
-    
-    toggles.forEach(toggleId => {
+    const toggles = [
+      'toggle-1',
+      'toggle-2',
+      'toggle-3',
+      'toggle-1',
+      'toggle-2',
+    ];
+
+    toggles.forEach((toggleId) => {
       act(() => {
         screen.getByTestId(toggleId).click();
       });
@@ -187,7 +202,9 @@ describe('TypedMessage with conditional rendering', () => {
     act(() => {
       screen.getByTestId('change-condition').click();
     });
-    expect(screen.getByTestId('result').textContent).toBe('Custom Message 1Custom Message 2');
+    expect(screen.getByTestId('result').textContent).toBe(
+      'Custom Message 1Custom Message 2'
+    );
 
     // back to none
     act(() => {
@@ -198,8 +215,10 @@ describe('TypedMessage with conditional rendering', () => {
 
   it('no warnings output to error console', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    
+    const consoleWarnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
+
     render(
       <TypedMessageProvider messages={testMessages}>
         <ConditionalRenderingComponent />
@@ -220,4 +239,4 @@ describe('TypedMessage with conditional rendering', () => {
     consoleSpy.mockRestore();
     consoleWarnSpy.mockRestore();
   });
-}); 
+});

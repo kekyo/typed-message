@@ -62,6 +62,7 @@ Parameter type extraction is done automatically by the Vite plugin. This means y
 - Automatic Fallback Message Aggregation - Specify fallback messages for when a message is not found
 - Parameterized Messages - Dynamic message formatting using placeholders (type-safe)
 - Vite Optimized - Automatic code generation via Vite plugin
+- JSDoc Comments - All generated messages include JSDoc comments with fallback text for better IDE support
 
 ### Requirements
 
@@ -491,9 +492,10 @@ When the same placeholder name is used with different types across locale files,
 }
 ```
 
-**Generated TypeScript code with warnings:**
+**Generated TypeScript code:**
 ```typescript
 /**
+ * Messgae: "User {userId:number} has {balance:number} points and status {isActive:boolean}"
  * Warning: Placeholder types do not match across locales
  * - userId: fallback.json: string, en.json: number, ja.json: boolean
  * - balance: fallback.json: number, en.json: number, ja.json: string

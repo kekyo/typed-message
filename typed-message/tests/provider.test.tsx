@@ -27,9 +27,9 @@ const FallbackTestComponent: React.FC = () => {
 // Placeholder replacement test component
 const PlaceholderTestComponent: React.FC = () => {
   const getMessage = useTypedMessage();
-  const testMessage: MessageItem<{ count: number; name: string }> = { 
-    key: 'PLACEHOLDER_KEY', 
-    fallback: 'You have {count:number} {name}'
+  const testMessage: MessageItem<{ count: number; name: string }> = {
+    key: 'PLACEHOLDER_KEY',
+    fallback: 'You have {count:number} {name}',
   };
   const result = getMessage(testMessage, { count: 5, name: 'apples' });
   return <div data-testid="placeholder-message">{result}</div>;
@@ -38,11 +38,14 @@ const PlaceholderTestComponent: React.FC = () => {
 // Parameterized fallback test component
 const ParameterizedFallbackTestComponent: React.FC = () => {
   const getMessage = useTypedMessage();
-  const testMessage: MessageItem<{ firstName: string; lastName: string }> = { 
-    key: 'PARAM_FALLBACK_KEY', 
-    fallback: 'Hello {firstName} {lastName}'
+  const testMessage: MessageItem<{ firstName: string; lastName: string }> = {
+    key: 'PARAM_FALLBACK_KEY',
+    fallback: 'Hello {firstName} {lastName}',
   };
-  const result = getMessage(testMessage, { firstName: 'John', lastName: 'Doe' });
+  const result = getMessage(testMessage, {
+    firstName: 'John',
+    lastName: 'Doe',
+  });
   return <div data-testid="param-fallback-message">{result}</div>;
 };
 
@@ -57,7 +60,7 @@ describe('TypedMessageProvider', () => {
         <TestComponent />
       </TypedMessageProvider>
     );
-    
+
     const element = screen.getByTestId('message');
     expect(element.textContent).toBe('Localized message');
   });
@@ -70,7 +73,7 @@ describe('TypedMessageProvider', () => {
         <FallbackTestComponent />
       </TypedMessageProvider>
     );
-    
+
     const element = screen.getByTestId('fallback-message');
     expect(element.textContent).toBe('This is fallback');
   });
@@ -90,7 +93,7 @@ describe('TypedMessageProvider', () => {
         <ParameterizedFallbackTestComponent />
       </TypedMessageProvider>
     );
-    
+
     const element = screen.getByTestId('param-fallback-message');
     expect(element.textContent).toBe('Hello John Doe');
   });
@@ -105,7 +108,7 @@ describe('TypedMessageProvider', () => {
         <PlaceholderTestComponent />
       </TypedMessageProvider>
     );
-    
+
     const element = screen.getByTestId('placeholder-message');
     expect(element.textContent).toBe('You have 5 apples (English version)');
   });
@@ -113,9 +116,9 @@ describe('TypedMessageProvider', () => {
   it('Date type arguments are formatted correctly', () => {
     const DateTestComponent: React.FC = () => {
       const getMessage = useTypedMessage();
-      const testMessage: MessageItem<{ date: Date }> = { 
-        key: 'DATE_KEY', 
-        fallback: 'Today is {date:date}'
+      const testMessage: MessageItem<{ date: Date }> = {
+        key: 'DATE_KEY',
+        fallback: 'Today is {date:date}',
       };
       const testDate = new Date('2024-01-01');
       const result = getMessage(testMessage, { date: testDate });
@@ -131,7 +134,7 @@ describe('TypedMessageProvider', () => {
         <DateTestComponent />
       </TypedMessageProvider>
     );
-    
+
     const element = screen.getByTestId('date-message');
     expect(element.textContent).toContain('2024');
   });
@@ -145,7 +148,7 @@ describe('TypedMessageProvider', () => {
         <TestComponent />
       </TypedMessageProvider>
     );
-    
+
     expect(screen.getByTestId('message').textContent).toBe('Initial message');
 
     rerender(
@@ -153,24 +156,34 @@ describe('TypedMessageProvider', () => {
         <TestComponent />
       </TypedMessageProvider>
     );
-    
+
     expect(screen.getByTestId('message').textContent).toBe('Updated message');
   });
 
   it('handles placeholders in different orders correctly', () => {
     const PlaceholderOrderTestComponent: React.FC = () => {
       const getMessage = useTypedMessage();
-      const testMessage: MessageItem<{ firstName: string; lastName: string; age: number }> = { 
-        key: 'PLACEHOLDER_ORDER_KEY', 
-        fallback: 'Hello {firstName} {lastName}, you are {age:number} years old'
+      const testMessage: MessageItem<{
+        firstName: string;
+        lastName: string;
+        age: number;
+      }> = {
+        key: 'PLACEHOLDER_ORDER_KEY',
+        fallback:
+          'Hello {firstName} {lastName}, you are {age:number} years old',
       };
-      const result = getMessage(testMessage, { firstName: '太郎', lastName: '田中', age: 25 });
+      const result = getMessage(testMessage, {
+        firstName: '太郎',
+        lastName: '田中',
+        age: 25,
+      });
       return <div data-testid="placeholder-order-message">{result}</div>;
     };
 
     // Japanese: {lastName} {firstName} order
     const jaMessages = {
-      PLACEHOLDER_ORDER_KEY: 'こんにちは {lastName} {firstName}さん、あなたは{age:number}歳です！',
+      PLACEHOLDER_ORDER_KEY:
+        'こんにちは {lastName} {firstName}さん、あなたは{age:number}歳です！',
     };
 
     render(
@@ -178,25 +191,37 @@ describe('TypedMessageProvider', () => {
         <PlaceholderOrderTestComponent />
       </TypedMessageProvider>
     );
-    
+
     const element = screen.getByTestId('placeholder-order-message');
-    expect(element.textContent).toBe('こんにちは 田中 太郎さん、あなたは25歳です！');
+    expect(element.textContent).toBe(
+      'こんにちは 田中 太郎さん、あなたは25歳です！'
+    );
   });
 
   it('handles placeholders in different orders correctly - English version', () => {
     const PlaceholderOrderTestComponent: React.FC = () => {
       const getMessage = useTypedMessage();
-      const testMessage: MessageItem<{ firstName: string; lastName: string; age: number }> = { 
-        key: 'PLACEHOLDER_ORDER_KEY', 
-        fallback: 'Hello {firstName} {lastName}, you are {age:number} years old'
+      const testMessage: MessageItem<{
+        firstName: string;
+        lastName: string;
+        age: number;
+      }> = {
+        key: 'PLACEHOLDER_ORDER_KEY',
+        fallback:
+          'Hello {firstName} {lastName}, you are {age:number} years old',
       };
-      const result = getMessage(testMessage, { firstName: '太郎', lastName: '田中', age: 25 });
+      const result = getMessage(testMessage, {
+        firstName: '太郎',
+        lastName: '田中',
+        age: 25,
+      });
       return <div data-testid="placeholder-order-message">{result}</div>;
     };
 
     // English: {firstName} {lastName} order
     const enMessages = {
-      PLACEHOLDER_ORDER_KEY: 'Hello {firstName} {lastName}, you are {age:number} years old!',
+      PLACEHOLDER_ORDER_KEY:
+        'Hello {firstName} {lastName}, you are {age:number} years old!',
     };
 
     render(
@@ -204,7 +229,7 @@ describe('TypedMessageProvider', () => {
         <PlaceholderOrderTestComponent />
       </TypedMessageProvider>
     );
-    
+
     const element = screen.getByTestId('placeholder-order-message');
     expect(element.textContent).toBe('Hello 太郎 田中, you are 25 years old!');
   });
@@ -212,11 +237,20 @@ describe('TypedMessageProvider', () => {
   it('handles missing placeholders gracefully', () => {
     const MissingPlaceholderTestComponent: React.FC = () => {
       const getMessage = useTypedMessage();
-      const testMessage: MessageItem<{ firstName: string; lastName: string; age: number }> = { 
-        key: 'MISSING_PLACEHOLDER_KEY', 
-        fallback: 'Hello {firstName} {lastName}, you are {age:number} years old'
+      const testMessage: MessageItem<{
+        firstName: string;
+        lastName: string;
+        age: number;
+      }> = {
+        key: 'MISSING_PLACEHOLDER_KEY',
+        fallback:
+          'Hello {firstName} {lastName}, you are {age:number} years old',
       };
-      const result = getMessage(testMessage, { firstName: '太郎', lastName: '田中', age: 25 });
+      const result = getMessage(testMessage, {
+        firstName: '太郎',
+        lastName: '田中',
+        age: 25,
+      });
       return <div data-testid="missing-placeholder-message">{result}</div>;
     };
 
@@ -230,8 +264,8 @@ describe('TypedMessageProvider', () => {
         <MissingPlaceholderTestComponent />
       </TypedMessageProvider>
     );
-    
+
     const element = screen.getByTestId('missing-placeholder-message');
     expect(element.textContent).toBe('Hello 太郎, welcome! Age: 25');
   });
-}); 
+});

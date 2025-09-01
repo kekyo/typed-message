@@ -9,7 +9,7 @@
   "dependencies": {
     "react": ">=18.2.0",
     "react-dom": ">=18.2.0",
-    "typed-message": "file:../typed-message"
+    "typed-message": "*"
   },
   "devDependencies": {
     "@types/react": ">=18.2.66",

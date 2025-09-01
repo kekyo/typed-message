@@ -5,6 +5,7 @@ import { dirname } from 'path';
 import react from '@vitejs/plugin-react-swc';
 import dts from 'vite-plugin-dts';
 import screwUp from 'screw-up';
+import prettierMax from 'prettier-max';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,7 +19,10 @@ export default defineConfig({
       outDir: 'dist',
       insertTypesEntry: true,
     }),
-    screwUp()
+    screwUp({
+      outputMetadataFile: true,
+    }),
+    prettierMax(),
   ],
   build: {
     lib: {
@@ -27,11 +31,21 @@ export default defineConfig({
         'vite-plugin': resolve(__dirname, 'src/vite.ts'),
       },
       name: 'TypedMessage',
+      fileName: (format, entryName) =>
+        `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
       formats: ['es', 'cjs'],
-      fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'fs', 'fs/promises', 'os', 'crypto', 'path', 'vite'],
+      external: [
+        'react',
+        'react-dom',
+        'fs',
+        'fs/promises',
+        'os',
+        'crypto',
+        'path',
+        'vite',
+      ],
       output: {
         globals: {
           react: 'React',
@@ -41,6 +55,7 @@ export default defineConfig({
       },
     },
     sourcemap: true,
+    minify: false,
     emptyOutDir: true,
   },
 });

@@ -9,40 +9,40 @@ import type { SimpleMessageItem, MessageItem } from './types';
 
 /**
  * Unified React component for displaying type-safe internationalized messages
- * 
+ *
  * Supports both non-parameterized and parameterized messages with compile-time type safety.
  * Uses TypeScript function overloads to ensure proper usage - params are required only for
  * parameterized messages and must match the expected parameter types.
- * 
+ *
  * The component automatically handles message retrieval from the context, fallback processing,
  * and parameter substitution for dynamic content.
- * 
+ *
  * @example
  * ```tsx
  * // Non-parameterized message
  * <TypedMessage message={messages.WELCOME_MESSAGE} />
- * 
+ *
  * // Parameterized message - TypeScript ensures type safety
- * <TypedMessage 
- *   message={messages.WELCOME_USER} 
- *   params={{ firstName: "John", lastName: "Doe", age: 25 }} 
+ * <TypedMessage
+ *   message={messages.WELCOME_USER}
+ *   params={{ firstName: "John", lastName: "Doe", age: 25 }}
  * />
  * ```
  */
 // Function overloads for TypedMessage
 export function TypedMessage(props: {
-  message: SimpleMessageItem
+  message: SimpleMessageItem;
 }): JSX.Element;
-export function TypedMessage<T extends Record<string, any>>(props: { 
-  message: MessageItem<T>; 
-  params: T; 
+export function TypedMessage<T extends Record<string, any>>(props: {
+  message: MessageItem<T>;
+  params: T;
 }): JSX.Element;
-export function TypedMessage<T extends Record<string, any>>(props: { 
-  message: SimpleMessageItem | MessageItem<T>; 
-  params?: T; 
+export function TypedMessage<T extends Record<string, any>>(props: {
+  message: SimpleMessageItem | MessageItem<T>;
+  params?: T;
 }): JSX.Element {
   const getMessage = useTypedMessage();
-  
+
   const result = useMemo(() => {
     if (props.params !== undefined) {
       // When params exist, treat as MessageItem<T>
@@ -52,6 +52,6 @@ export function TypedMessage<T extends Record<string, any>>(props: {
       return getMessage(props.message as SimpleMessageItem);
     }
   }, [getMessage, props.message, props.params]);
-  
+
   return <>{result}</>;
 }
