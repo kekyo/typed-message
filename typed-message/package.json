@@ -20,19 +20,19 @@
   },
   "homepage": "https://github.com/kekyo/typed-message#readme",
   "type": "module",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./vite": {
       "types": "./dist/vite-plugin.d.ts",
-      "import": "./dist/vite-plugin.mjs",
-      "require": "./dist/vite-plugin.js"
+      "import": "./dist/vite-plugin.js",
+      "require": "./dist/vite-plugin.cjs"
     }
   },
   "files": [
@@ -40,10 +40,9 @@
     "images/typed-message-120-c.png"
   ],
   "scripts": {
-    "build": "vite build",
+    "build": "./gen-packageMetadata.sh && vite build",
     "test": "npm run build && vitest run",
-    "prepack": "mkdir -p ./images && cp ../images/typed-message-120-c.png ./images/",
-    "pack": "npm run build && npm run prepack && screw-up pack --pack-destination ../artifacts"
+    "pack": "npm run build && screw-up pack --pack-destination ../artifacts"
   },
   "peerDependencies": {
     "json5": ">=2.0.0",
@@ -59,9 +58,10 @@
     "@types/react-dom": ">=18.0.0",
     "@vitejs/plugin-react-swc": ">=3.5.0",
     "jsdom": ">=23.0.0",
+    "prettier-max": ">=0.3.0",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0",
-    "screw-up": ">=0.14.0",
+    "screw-up": ">=1.4.0",
     "typescript": ">=5.0.0",
     "vite": ">=6.3.5",
     "vite-plugin-dts": ">=4.5.4",

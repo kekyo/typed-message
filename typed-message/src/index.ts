@@ -10,12 +10,12 @@ export { TypedMessage } from './component';
 // export typedMessage from 'typed-message/vite'
 
 // Type definition exports
-export type { 
-  MessageItem, 
-  SimpleMessageItem, 
-  MessageDictionary, 
-  TypedMessageProviderProps, 
+export type {
+  MessageItem,
+  SimpleMessageItem,
+  MessageDictionary,
+  TypedMessageProviderProps,
   FormatterFunction,
   PlaceholderInfo,
-  ParsedMessage
+  ParsedMessage,
 } from './types';

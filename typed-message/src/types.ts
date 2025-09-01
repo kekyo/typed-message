@@ -5,10 +5,10 @@
 
 /**
  * Type definition for non-parameterized message items
- * 
+ *
  * Represents a simple message that doesn't require any parameters for formatting.
  * Used for basic text messages that are displayed as-is from the locale dictionary.
- * 
+ *
  * @example
  * ```typescript
  * const simpleMessage: SimpleMessageItem = {
@@ -26,13 +26,13 @@ export interface SimpleMessageItem {
 
 /**
  * Type definition for parameterized message items with generic support
- * 
+ *
  * Represents a message that requires parameters for formatting, such as user names,
  * counts, dates, etc. The generic type T ensures type safety for the parameters
  * passed to the formatter function.
- * 
+ *
  * @template T - An object type representing the parameters required for this message
- * 
+ *
  * @example
  * ```typescript
  * const paramMessage: MessageItem<{ name: string; age: number }> = {
@@ -51,11 +51,11 @@ export interface MessageItem<T extends Record<string, any>> {
 
 /**
  * Type definition for message dictionary
- * 
+ *
  * Represents a collection of key-value pairs where keys are message identifiers
  * and values are the actual translated text. This is typically loaded from
  * JSON locale files (e.g., en.json, ja.json).
- * 
+ *
  * @example
  * ```typescript
  * const messages: MessageDictionary = {
@@ -71,11 +71,11 @@ export interface MessageDictionary {
 
 /**
  * TypedMessageProvider component props
- * 
+ *
  * Props for the React context provider that supplies message dictionaries
  * to child components. The provider manages message retrieval and fallback
  * processing throughout the component tree.
- * 
+ *
  * @example
  * ```tsx
  * <TypedMessageProvider messages={enMessages}>
@@ -84,7 +84,7 @@ export interface MessageDictionary {
  * ```
  */
 export interface TypedMessageProviderProps {
-  /** 
+  /**
    * Message dictionary containing key-value pairs of message identifiers and their translations.
    * If omitted, defaults to an empty object.
    */
@@ -95,27 +95,29 @@ export interface TypedMessageProviderProps {
 
 /**
  * Type helper for formatter functions
- * 
+ *
  * Represents a function that takes an object with parameters and returns
  * a formatted string. Used internally for message formatting with parameters.
- * 
+ *
  * @template T - An object type representing the function parameters
- * 
+ *
  * @example
  * ```typescript
- * const formatter: FormatterFunction<{ name: string; age: number }> = ({ name, age }) => 
+ * const formatter: FormatterFunction<{ name: string; age: number }> = ({ name, age }) =>
  *   `Hello ${name}, you are ${age} years old!`;
  * ```
  */
-export type FormatterFunction<T extends Record<string, any>> = (params: T) => string;
+export type FormatterFunction<T extends Record<string, any>> = (
+  params: T
+) => string;
 
 /**
  * Type for placeholder analysis results
- * 
+ *
  * Contains information about a single placeholder found in a message template.
  * Used by the Vite plugin during code generation to analyze message patterns
  * and generate appropriate TypeScript types.
- * 
+ *
  * @example
  * ```typescript
  * const placeholder: PlaceholderInfo = {
@@ -136,11 +138,11 @@ export interface PlaceholderInfo {
 
 /**
  * Type for message analysis results
- * 
+ *
  * Contains comprehensive information about a parsed message template,
  * including its placeholders and fallback content. Used by the Vite plugin
  * to generate type-safe message definitions.
- * 
+ *
  * @example
  * ```typescript
  * const parsedMessage: ParsedMessage = {

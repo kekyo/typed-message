@@ -17,16 +17,16 @@ const paramMessage: MessageItem<{ count: number; name: string }> = {
 };
 
 // Component that counts render times
-const RenderCounterComponent: React.FC<{ 
+const RenderCounterComponent: React.FC<{
   message: SimpleMessageItem;
   onRender: () => void;
 }> = ({ message, onRender }) => {
   const renderCountRef = useRef(0);
   renderCountRef.current += 1;
-  
+
   // Call callback on each render
   onRender();
-  
+
   return (
     <div data-testid="render-counter">
       <span data-testid="render-count">{renderCountRef.current}</span>
@@ -43,9 +43,9 @@ const ParamRenderCounterComponent: React.FC<{
 }> = ({ message, params, onRender }) => {
   const renderCountRef = useRef(0);
   renderCountRef.current += 1;
-  
+
   onRender();
-  
+
   return (
     <div data-testid="param-render-counter">
       <span data-testid="param-render-count">{renderCountRef.current}</span>
@@ -57,7 +57,10 @@ const ParamRenderCounterComponent: React.FC<{
 // Parent component re-render test
 const ParentReRenderComponent: React.FC = () => {
   const [counter, setCounter] = useState(0);
-  const [messageParams, setMessageParams] = useState<{ count: number; name: string }>({ count: 5, name: 'apples' });
+  const [messageParams, setMessageParams] = useState<{
+    count: number;
+    name: string;
+  }>({ count: 5, name: 'apples' });
   const renderCallCount = useRef(0);
   const paramRenderCallCount = useRef(0);
 
@@ -73,33 +76,32 @@ const ParentReRenderComponent: React.FC = () => {
     <div>
       <div data-testid="parent-counter">{counter}</div>
       <div data-testid="total-render-calls">{renderCallCount.current}</div>
-      <div data-testid="total-param-render-calls">{paramRenderCallCount.current}</div>
-      
-      <RenderCounterComponent 
-        message={simpleMessage} 
-        onRender={handleRender}
-      />
-      
+      <div data-testid="total-param-render-calls">
+        {paramRenderCallCount.current}
+      </div>
+
+      <RenderCounterComponent message={simpleMessage} onRender={handleRender} />
+
       <ParamRenderCounterComponent
         message={paramMessage}
         params={messageParams}
         onRender={handleParamRender}
       />
-      
+
       <button
         data-testid="increment-counter"
-        onClick={() => setCounter(prev => prev + 1)}
+        onClick={() => setCounter((prev) => prev + 1)}
       >
         Increment Counter
       </button>
-      
+
       <button
         data-testid="change-params"
         onClick={() => setMessageParams({ count: 3, name: 'oranges' })}
       >
         Change Parameters
       </button>
-      
+
       <button
         data-testid="same-params"
         onClick={() => setMessageParams({ count: 3, name: 'oranges' })}
@@ -118,20 +120,17 @@ describe('TypedMessage performance tests', () => {
 
   it('useMemo works when re-rendered with same props', () => {
     const renderSpy = vi.fn();
-    
+
     const TestComponent: React.FC = () => {
       const [, forceUpdate] = useState({});
-      
+
       return (
         <div>
-          <RenderCounterComponent 
-            message={simpleMessage} 
+          <RenderCounterComponent
+            message={simpleMessage}
             onRender={renderSpy}
           />
-          <button
-            data-testid="force-rerender"
-            onClick={() => forceUpdate({})}
-          >
+          <button data-testid="force-rerender" onClick={() => forceUpdate({})}>
             Force Re-render
           </button>
         </div>
@@ -203,17 +202,19 @@ describe('TypedMessage performance tests', () => {
   it('messages dictionary changes are recalculated appropriately', () => {
     const TestComponent: React.FC = () => {
       const [messages, setMessages] = useState(testMessages);
-      
+
       return (
         <TypedMessageProvider messages={messages}>
           <div>
             <TypedMessage message={simpleMessage} />
             <button
               data-testid="change-messages"
-              onClick={() => setMessages({
-                SIMPLE_MSG: 'Updated simple message',
-                PARAM_MSG: 'Updated param message',
-              })}
+              onClick={() =>
+                setMessages({
+                  SIMPLE_MSG: 'Updated simple message',
+                  PARAM_MSG: 'Updated param message',
+                })
+              }
             >
               Change Messages
             </button>
@@ -233,4 +234,4 @@ describe('TypedMessage performance tests', () => {
     expect(screen.getByText('Updated simple message')).toBeDefined();
     expect(screen.queryByText('Custom simple message')).toBeNull();
   });
-}); 
+});

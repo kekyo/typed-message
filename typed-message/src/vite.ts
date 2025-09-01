@@ -11,5 +11,9 @@
 // import typedMessage from 'typed-message/vite';
 // ```
 
-export { default, typedMessagePlugin, type TypedMessagePluginOptions } from './vite-plugin';
+export {
+  default,
+  typedMessagePlugin,
+  type TypedMessagePluginOptions,
+} from './vite-plugin';
 export { default as typedMessage } from './vite-plugin';

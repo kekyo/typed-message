@@ -28,7 +28,7 @@ describe('TypedMessage - SimpleMessageItem', () => {
         <TypedMessage message={testMessage} />
       </TypedMessageProvider>
     );
-    
+
     expect(screen.getByText('Default message')).toBeDefined();
   });
 
@@ -42,7 +42,7 @@ describe('TypedMessage - SimpleMessageItem', () => {
         <TypedMessage message={testMessage} />
       </TypedMessageProvider>
     );
-    
+
     expect(screen.getByText('Custom message')).toBeDefined();
     expect(screen.queryByText('Default message')).toBeNull();
   });
@@ -65,9 +65,13 @@ describe('TypedMessage - SimpleMessageItem', () => {
         </div>
       </TypedMessageProvider>
     );
-    
-    expect(screen.getByTestId('test-message').textContent).toBe('Custom message');
-    expect(screen.getByTestId('title-message').textContent).toBe('Custom title');
+
+    expect(screen.getByTestId('test-message').textContent).toBe(
+      'Custom message'
+    );
+    expect(screen.getByTestId('title-message').textContent).toBe(
+      'Custom title'
+    );
   });
 
   it('falls back appropriately when message dictionary partially exists', () => {
@@ -88,15 +92,19 @@ describe('TypedMessage - SimpleMessageItem', () => {
         </div>
       </TypedMessageProvider>
     );
-    
-    expect(screen.getByTestId('test-message').textContent).toBe('Custom message');
-    expect(screen.getByTestId('title-message').textContent).toBe('Default title');
+
+    expect(screen.getByTestId('test-message').textContent).toBe(
+      'Custom message'
+    );
+    expect(screen.getByTestId('title-message').textContent).toBe(
+      'Default title'
+    );
   });
 
   it('throws error when used outside provider', () => {
-    expect(() => 
-      render(<TypedMessage message={testMessage} />)
-    ).toThrow('useTypedMessage must be used within a TypedMessageProvider');
+    expect(() => render(<TypedMessage message={testMessage} />)).toThrow(
+      'useTypedMessage must be used within a TypedMessageProvider'
+    );
   });
 });
 
@@ -108,31 +116,37 @@ describe('TypedMessage - MessageItem integrated version', () => {
 
     render(
       <TypedMessageProvider messages={messages}>
-        <TypedMessage 
-          message={paramMessage} 
-          params={{ count: 5, name: 'apples' }} 
+        <TypedMessage
+          message={paramMessage}
+          params={{ count: 5, name: 'apples' }}
         />
       </TypedMessageProvider>
     );
-    
-    expect(screen.getByText('You have 5 apples (English version)')).toBeDefined();
+
+    expect(
+      screen.getByText('You have 5 apples (English version)')
+    ).toBeDefined();
   });
 
   it('uses fallback when no localized value exists for parameterized message', () => {
     render(
       <TypedMessageProvider messages={{}}>
-        <TypedMessage 
-          message={paramMessage} 
-          params={{ count: 3, name: 'oranges' }} 
+        <TypedMessage
+          message={paramMessage}
+          params={{ count: 3, name: 'oranges' }}
         />
       </TypedMessageProvider>
     );
-    
+
     expect(screen.getByText('You have 3 oranges')).toBeDefined();
   });
 
   it('handles multiple parameters correctly in integrated TypedMessage', () => {
-    const userMessage: MessageItem<{ firstName: string; lastName: string; age: number }> = {
+    const userMessage: MessageItem<{
+      firstName: string;
+      lastName: string;
+      age: number;
+    }> = {
       key: 'USER_MESSAGE',
       fallback: 'Hello {firstName} {lastName}, you are {age:number} years old',
     };
@@ -143,13 +157,13 @@ describe('TypedMessage - MessageItem integrated version', () => {
 
     render(
       <TypedMessageProvider messages={messages}>
-        <TypedMessage 
-          message={userMessage} 
-          params={{ firstName: 'Taro', lastName: 'Tanaka', age: 25 }} 
+        <TypedMessage
+          message={userMessage}
+          params={{ firstName: 'Taro', lastName: 'Tanaka', age: 25 }}
         />
       </TypedMessageProvider>
     );
-    
+
     expect(screen.getByText('Welcome Taro Tanaka, age: 25')).toBeDefined();
   });
 
@@ -164,7 +178,7 @@ describe('TypedMessage - MessageItem integrated version', () => {
         */}
       </TypedMessageProvider>
     );
-    
+
     expect(screen.getByText('Default message')).toBeDefined();
   });
 
@@ -175,16 +189,16 @@ describe('TypedMessage - MessageItem integrated version', () => {
 
     render(
       <TypedMessageProvider messages={messages}>
-        <TypedMessage 
-          message={paramMessage} 
-          params={{ count: 10, name: 'bananas' }} 
+        <TypedMessage
+          message={paramMessage}
+          params={{ count: 10, name: 'bananas' }}
         />
         {/* The following would cause TypeScript error:
         <TypedMessage message={paramMessage} />
         */}
       </TypedMessageProvider>
     );
-    
+
     expect(screen.getByText('Test message')).toBeDefined();
   });
-}); 
+});
