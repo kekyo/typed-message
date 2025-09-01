@@ -3,12 +3,13 @@
 // Under MIT
 // https://github.com/kekyo/typed-message
 
-import type { Plugin } from 'vite';
+import type { LogLevel, Plugin, Logger as ViteLogger } from 'vite';
 import { existsSync } from 'fs';
 import { readFile, readdir, stat, writeFile, mkdir } from 'fs/promises';
 import { join, resolve, dirname, extname, basename } from 'path';
 import JSON5 from 'json5';
 import type { PlaceholderInfo, ParsedMessage } from './types';
+import { version, git_commit_hash } from './generated/packageMetadata';
 
 /**
  * Configuration options for the typed-message Vite plugin
@@ -141,7 +142,8 @@ const generateObjectTypeString = (placeholders: PlaceholderInfo[]) => {
 // Function to check placeholder type consistency across locales
 const checkPlaceholderTypeConsistency = async (
   localeFiles: string[],
-  localeDir: string
+  localeDir: string,
+  logger: Logger
 ) => {
   // Analyze messages in each locale file individually
   const localeMessages: {
@@ -169,7 +171,7 @@ const checkPlaceholderTypeConsistency = async (
         }
       });
     } catch (error) {
-      console.error(`Error reading locale file ${file}:`, error);
+      logger.error(`Error reading locale file ${file}: ${error}`);
       // Continue processing even if an error occurs and add to the list of invalid files
       invalidFiles.push(file);
       continue;
@@ -297,7 +299,8 @@ ${conflictDescriptions}
 // Message file generation function
 const generateMessageFile = async (
   options: Required<TypedMessagePluginOptions>,
-  rootDir: string
+  rootDir: string,
+  logger: Logger
 ): Promise<void> => {
   try {
     const localeDir = resolve(rootDir, options.localeDir);
@@ -305,17 +308,18 @@ const generateMessageFile = async (
 
     // Create locale directory if it doesn't exist
     if (!existsSync(localeDir)) {
-      console.warn(`Locale directory does not exist: ${localeDir}`);
+      logger.warn(`Locale directory does not exist: ${localeDir}`);
       return;
     }
 
     // Read JSON files
     const localeFiles = await getLocaleFiles(
       localeDir,
-      options.fallbackPriorityOrder
+      options.fallbackPriorityOrder,
+      logger
     );
     const { aggregatedMessages, warnings, invalidFiles } =
-      await checkPlaceholderTypeConsistency(localeFiles, localeDir);
+      await checkPlaceholderTypeConsistency(localeFiles, localeDir, logger);
 
     // Generate TypeScript code
     const tsCode = generateTypeScriptCode(
@@ -333,37 +337,37 @@ const generateMessageFile = async (
     // Write file
     await writeFile(outputPath, tsCode, 'utf-8');
 
-    console.log(
+    logger.info(
       `Generated typed messages: ${outputPath} (${Object.keys(aggregatedMessages).length} keys)`
     );
 
     // Warnings in logs
     if (warnings.length > 0) {
-      console.warn(
+      logger.warn(
         `Placeholder type mismatches detected in ${warnings.length} message(s):`
       );
       warnings.forEach((warning) => {
-        console.warn(
+        logger.warn(
           `  - ${warning.key}: ${warning.conflicts.map((c) => c.parameterName).join(', ')}`
         );
       });
     }
 
     if (invalidFiles.length > 0) {
-      console.warn(
-        `${invalidFiles.length} invalid JSON file(s) detected:`,
-        invalidFiles
+      logger.warn(
+        `${invalidFiles.length} invalid JSON file(s) detected: ${invalidFiles.join(', ')}`
       );
     }
   } catch (error) {
-    console.error('Error generating message file:', error);
+    logger.error(`Error generating message file: ${error}`);
   }
 };
 
 // Get locale file list
 const getLocaleFiles = async (
   localeDir: string,
-  fallbackPriorityOrder: string[]
+  fallbackPriorityOrder: string[],
+  _logger: Logger
 ): Promise<string[]> => {
   if (!existsSync(localeDir)) {
     return [];
@@ -491,6 +495,70 @@ export default messages;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Logger interface
+ */
+export interface Logger {
+  /**
+   * Log an debug message
+   * @param msg - The message to log
+   */
+  readonly debug: (msg: string) => void;
+  /**
+   * Log an info message
+   * @param msg - The message to log
+   */
+  readonly info: (msg: string) => void;
+  /**
+   * Log a warning message
+   * @param msg - The message to log
+   */
+  readonly warn: (msg: string) => void;
+  /**
+   * Log an error message
+   * @param msg - The message to log
+   */
+  readonly error: (msg: string) => void;
+}
+
+// Simple logger implementation with prefix
+const createConsoleLogger = (prefix: string): Logger => {
+  return {
+    debug: (msg: string) => console.debug(`[${prefix}]: ${msg}`),
+    info: (msg: string) => console.info(`[${prefix}]: ${msg}`),
+    warn: (msg: string) => console.warn(`[${prefix}]: ${msg}`),
+    error: (msg: string) => console.error(`[${prefix}]: ${msg}`),
+  };
+};
+
+// Vite logger adapter with prefix
+const createViteLoggerAdapter = (
+  viteLogger: ViteLogger,
+  logLevel: LogLevel,
+  prefix: string
+): Logger => {
+  return {
+    debug:
+      logLevel !== 'silent'
+        ? (msg: string) => viteLogger.info(`[${prefix}]: ${msg}`)
+        : () => {},
+    info:
+      logLevel !== 'silent'
+        ? (msg: string) => viteLogger.info(`[${prefix}]: ${msg}`)
+        : () => {},
+    warn:
+      logLevel === 'warn' || logLevel === 'info'
+        ? (msg: string) => viteLogger.warn(`[${prefix}]: ${msg}`)
+        : () => {},
+    error:
+      logLevel === 'error'
+        ? (msg: string) => viteLogger.error(`[${prefix}]: ${msg}`)
+        : () => {},
+  };
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
 // Default options
 const defaultOptions: Required<TypedMessagePluginOptions> = {
   localeDir: 'locale',
@@ -534,23 +602,35 @@ const typedMessage = (options: TypedMessagePluginOptions = {}): Plugin => {
   const opts = { ...defaultOptions, ...options };
   let rootDir = '';
 
+  // Create logger instance
+  let logger = createConsoleLogger('typed-message-vite');
+
   return {
     name: 'typed-message',
     configResolved: (config) => {
       rootDir = config.root || process.cwd();
-      console.log(
-        `TypedMessage plugin initialized. Locale dir: ${opts.localeDir}, Output: ${opts.outputPath}`
+      // Use Vite logger if available, otherwise fall back to console logger
+      if (config.logger) {
+        logger = createViteLoggerAdapter(
+          config.logger,
+          config.logLevel ?? 'info',
+          'typed-message-vite'
+        );
+      }
+      logger.info(`${version}-${git_commit_hash}: Started.`);
+      logger.info(
+        `Locale dir: "${opts.localeDir}", Output: "${opts.outputPath}"`
       );
     },
     buildStart: () => {
       // Generate message file at build start
-      return generateMessageFile(opts, rootDir);
+      return generateMessageFile(opts, rootDir, logger);
     },
     handleHotUpdate: async ({ file, server }) => {
       // Handle hot reload
       if (file.includes(opts.localeDir)) {
-        console.log('Locale file changed, regenerating messages...');
-        await generateMessageFile(opts, rootDir);
+        logger.info('Locale file changed, regenerating messages...');
+        await generateMessageFile(opts, rootDir, logger);
         server.ws.send({
           type: 'full-reload',
         });
