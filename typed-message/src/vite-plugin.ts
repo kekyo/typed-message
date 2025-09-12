@@ -3,12 +3,13 @@
 // Under MIT
 // https://github.com/kekyo/typed-message
 
-import type { LogLevel, Plugin, Logger as ViteLogger } from 'vite';
+import type { Plugin } from 'vite';
 import { existsSync } from 'fs';
 import { readFile, readdir, stat, writeFile, mkdir } from 'fs/promises';
 import { join, resolve, dirname, extname, basename } from 'path';
 import JSON5 from 'json5';
 import type { PlaceholderInfo, ParsedMessage } from './types';
+import { createConsoleLogger, createViteLoggerAdapter, Logger } from './logger';
 import { version, git_commit_hash } from './generated/packageMetadata';
 
 /**
@@ -495,70 +496,6 @@ export default messages;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
-/**
- * Logger interface
- */
-export interface Logger {
-  /**
-   * Log an debug message
-   * @param msg - The message to log
-   */
-  readonly debug: (msg: string) => void;
-  /**
-   * Log an info message
-   * @param msg - The message to log
-   */
-  readonly info: (msg: string) => void;
-  /**
-   * Log a warning message
-   * @param msg - The message to log
-   */
-  readonly warn: (msg: string) => void;
-  /**
-   * Log an error message
-   * @param msg - The message to log
-   */
-  readonly error: (msg: string) => void;
-}
-
-// Simple logger implementation with prefix
-const createConsoleLogger = (prefix: string): Logger => {
-  return {
-    debug: (msg: string) => console.debug(`[${prefix}]: ${msg}`),
-    info: (msg: string) => console.info(`[${prefix}]: ${msg}`),
-    warn: (msg: string) => console.warn(`[${prefix}]: ${msg}`),
-    error: (msg: string) => console.error(`[${prefix}]: ${msg}`),
-  };
-};
-
-// Vite logger adapter with prefix
-const createViteLoggerAdapter = (
-  viteLogger: ViteLogger,
-  logLevel: LogLevel,
-  prefix: string
-): Logger => {
-  return {
-    debug:
-      logLevel !== 'silent'
-        ? (msg: string) => viteLogger.info(`[${prefix}]: ${msg}`)
-        : () => {},
-    info:
-      logLevel !== 'silent'
-        ? (msg: string) => viteLogger.info(`[${prefix}]: ${msg}`)
-        : () => {},
-    warn:
-      logLevel === 'warn' || logLevel === 'info'
-        ? (msg: string) => viteLogger.warn(`[${prefix}]: ${msg}`)
-        : () => {},
-    error:
-      logLevel === 'error'
-        ? (msg: string) => viteLogger.error(`[${prefix}]: ${msg}`)
-        : () => {},
-  };
-};
-
-//////////////////////////////////////////////////////////////////////////////////////////
-
 // Default options
 const defaultOptions: Required<TypedMessagePluginOptions> = {
   localeDir: 'locale',
@@ -610,9 +547,9 @@ const typedMessage = (options: TypedMessagePluginOptions = {}): Plugin => {
     configResolved: (config) => {
       rootDir = config.root || process.cwd();
       // Use Vite logger if available, otherwise fall back to console logger
-      if (config.logger) {
+      if (config.customLogger || config.logger) {
         logger = createViteLoggerAdapter(
-          config.logger,
+          config.customLogger || config.logger,
           config.logLevel ?? 'info',
           'typed-message-vite'
         );
