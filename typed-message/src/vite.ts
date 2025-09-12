@@ -11,9 +11,10 @@
 // import typedMessage from 'typed-message/vite';
 // ```
 
-export {
-  default,
-  typedMessagePlugin,
-  type TypedMessagePluginOptions,
-} from './vite-plugin';
+export { default, type TypedMessagePluginOptions } from './vite-plugin';
 export { default as typedMessage } from './vite-plugin';
+
+/**
+ * @deprecated Backward compatibility symbol, use `typedMessage` default symbol instead.
+ */
+export { typedMessagePlugin } from './vite-plugin';

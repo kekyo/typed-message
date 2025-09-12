@@ -12,5 +12,7 @@
     "test": "npm run test --workspace=typed-message",
     "pack": "npm run pack --workspace=typed-message",
     "dev": "npm run dev --workspace=demo"
+  },
+  "dependencies": {
   }
 }
