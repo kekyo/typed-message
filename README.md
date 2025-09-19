@@ -179,6 +179,8 @@ Supported types:
 If you are doing a manual build, please build it.
 The Vite plugin is installed correctly, just edit the message file and the `src/generated/messages.ts` file should be generated automatically!
 
+The generated module exports both the `messages` map and a `locales` array. `locales` lists every detected locale symbol (file name without extension) except the fallback locale, so you can drive UI pickers or debugging tools straight from the generated data.
+
 Now that you are ready, all you have to do is use the message.
 
 #### TypedMessage Component (Recommended)

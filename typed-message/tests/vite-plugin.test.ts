@@ -94,6 +94,8 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).toContain(
       'import type { MessageItem, SimpleMessageItem }'
     );
+    expect(generatedCode).toContain('/** All known locale symbols */');
+    expect(generatedCode).toContain("export const locales = ['en'];");
     expect(generatedCode).toContain('export const messages');
     expect(generatedCode).toContain('TITLE: { ');
     expect(generatedCode).toContain('key: "TITLE"');
@@ -184,6 +186,7 @@ describe('typedMessagePlugin', () => {
 
     // Processing order: en.json -> fallback.json -> ja.json (alphabetical)
     // Last ja.json has highest priority, so TITLE becomes "Japanese Title"
+    expect(generatedCode).toContain("export const locales = ['en', 'ja'];");
     expect(generatedCode).toContain('key: "TITLE"');
     expect(generatedCode).toContain('fallback: "Japanese Title"');
     expect(generatedCode).toContain('key: "SHARED_KEY"');
