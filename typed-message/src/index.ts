@@ -3,8 +3,12 @@
 // Under MIT
 // https://github.com/kekyo/typed-message
 
-export { TypedMessageProvider, useTypedMessage } from './provider';
-export { TypedMessage } from './component';
+export {
+  TypedMessageProvider,
+  useTypedMessage,
+  useTypedMessageDynamic,
+} from './provider';
+export { TypedMessage, TypedMessageDynamic } from './component';
 
 // vite-plugin is server-side only, so exclude from client-side index.ts
 // export typedMessage from 'typed-message/vite'

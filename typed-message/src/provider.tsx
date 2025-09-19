@@ -14,6 +14,8 @@ import type {
 // Create Context
 const TypedMessageContext = createContext<MessageDictionary | null>(null);
 
+const MESSAGE_NOT_FOUND_PREFIX = 'MESSAGE_NOT_FOUND: ';
+
 /**
  * React context provider component for typed internationalization messages
  *
@@ -149,4 +151,61 @@ export const useTypedMessage = () => {
   );
 
   return getMessage;
+};
+
+/**
+ * React hook for runtime message resolution using string keys.
+ *
+ * Unlike {@link useTypedMessage}, this hook does not rely on generated message
+ * metadata and therefore skips compile-time validation. It is intended for
+ * scenarios where message keys are only known at runtime (e.g. CMS content or
+ * user input).
+ *
+ * The hook exposes two helpers:
+ * - `getMessageDynamic(key, params?)`: returns the formatted message or the
+ *   marker `MESSAGE_NOT_FOUND: {key}` when the lookup fails.
+ * - `tryGetMessageDynamic(key, params?)`: returns the formatted message or
+ *   `undefined` when the lookup fails, allowing the caller to decide how to
+ *   handle missing keys.
+ */
+export const useTypedMessageDynamic = () => {
+  const messages = useContext(TypedMessageContext);
+
+  if (messages === null) {
+    throw new Error(
+      'useTypedMessageDynamic must be used within a TypedMessageProvider'
+    );
+  }
+
+  const tryGetMessageDynamic = useCallback(
+    (key: string, params?: Record<string, unknown>) => {
+      const localizedMessage = messages[key];
+
+      if (!localizedMessage) {
+        return undefined;
+      }
+
+      if (params && typeof params === 'object') {
+        return replacePlaceholders(localizedMessage, params);
+      }
+
+      return localizedMessage;
+    },
+    [messages]
+  );
+
+  const getMessageDynamic = useCallback(
+    (key: string, params?: Record<string, unknown>) => {
+      const result = tryGetMessageDynamic(key, params);
+
+      if (result === undefined) {
+        return `${MESSAGE_NOT_FOUND_PREFIX}${key}`;
+      }
+
+      return result;
+    },
+    [tryGetMessageDynamic]
+  );
+
+  return { getMessageDynamic, tryGetMessageDynamic };
 };

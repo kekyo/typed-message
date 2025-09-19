@@ -4,7 +4,7 @@
 // https://github.com/kekyo/typed-message
 
 import { JSX, useMemo } from 'react';
-import { useTypedMessage } from './provider';
+import { useTypedMessage, useTypedMessageDynamic } from './provider';
 import type { SimpleMessageItem, MessageItem } from './types';
 
 /**
@@ -52,6 +52,27 @@ export function TypedMessage<T extends Record<string, any>>(props: {
       return getMessage(props.message as SimpleMessageItem);
     }
   }, [getMessage, props.message, props.params]);
+
+  return <>{result}</>;
+}
+
+/**
+ * React component counterpart to {@link useTypedMessageDynamic}.
+ *
+ * It resolves messages by string key at render time. When the key is missing
+ * the component renders the marker string `MESSAGE_NOT_FOUND: {key}` so that
+ * missing translations remain visible in the UI.
+ */
+export function TypedMessageDynamic(props: {
+  messageKey: string;
+  params?: Record<string, unknown>;
+}): JSX.Element {
+  const { getMessageDynamic } = useTypedMessageDynamic();
+
+  const result = useMemo(
+    () => getMessageDynamic(props.messageKey, props.params),
+    [getMessageDynamic, props.messageKey, props.params]
+  );
 
   return <>{result}</>;
 }

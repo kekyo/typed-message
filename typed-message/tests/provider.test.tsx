@@ -1,7 +1,12 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import { TypedMessageProvider, useTypedMessage } from '../src/provider';
+import {
+  TypedMessageProvider,
+  useTypedMessage,
+  useTypedMessageDynamic,
+} from '../src/provider';
+import { TypedMessageDynamic } from '../src/component';
 import type { MessageItem } from '../src/types';
 
 // Test component
@@ -47,6 +52,28 @@ const ParameterizedFallbackTestComponent: React.FC = () => {
     lastName: 'Doe',
   });
   return <div data-testid="param-fallback-message">{result}</div>;
+};
+
+const DynamicMessageComponent: React.FC<{
+  messageKey: string;
+  params?: Record<string, unknown>;
+}> = ({ messageKey, params }) => {
+  const { getMessageDynamic } = useTypedMessageDynamic();
+  const result = getMessageDynamic(messageKey, params);
+  return <div data-testid="dynamic-message">{result}</div>;
+};
+
+const DynamicTryComponent: React.FC<{
+  messageKey: string;
+  params?: Record<string, unknown>;
+}> = ({ messageKey, params }) => {
+  const { tryGetMessageDynamic } = useTypedMessageDynamic();
+  const result = tryGetMessageDynamic(messageKey, params);
+  return (
+    <div data-testid="dynamic-try">
+      {result === undefined ? 'undefined' : result}
+    </div>
+  );
 };
 
 describe('TypedMessageProvider', () => {
@@ -267,5 +294,83 @@ describe('TypedMessageProvider', () => {
 
     const element = screen.getByTestId('missing-placeholder-message');
     expect(element.textContent).toBe('Hello 太郎, welcome! Age: 25');
+  });
+
+  it('getMessageDynamic returns localized message when available', () => {
+    const testMessages = {
+      DYNAMIC_KEY: 'Dynamic hello {name}',
+    };
+
+    render(
+      <TypedMessageProvider messages={testMessages}>
+        <DynamicMessageComponent
+          messageKey="DYNAMIC_KEY"
+          params={{ name: 'Alice' }}
+        />
+      </TypedMessageProvider>
+    );
+
+    const element = screen.getByTestId('dynamic-message');
+    expect(element.textContent).toBe('Dynamic hello Alice');
+  });
+
+  it('getMessageDynamic returns not found marker when key missing', () => {
+    const testMessages = {};
+
+    render(
+      <TypedMessageProvider messages={testMessages}>
+        <DynamicMessageComponent messageKey="UNKNOWN_KEY" />
+      </TypedMessageProvider>
+    );
+
+    const element = screen.getByTestId('dynamic-message');
+    expect(element.textContent).toBe('MESSAGE_NOT_FOUND: UNKNOWN_KEY');
+  });
+
+  it('tryGetMessageDynamic returns undefined when key missing', () => {
+    const testMessages = {};
+
+    render(
+      <TypedMessageProvider messages={testMessages}>
+        <DynamicTryComponent messageKey="MISSING_KEY" />
+      </TypedMessageProvider>
+    );
+
+    const element = screen.getByTestId('dynamic-try');
+    expect(element.textContent).toBe('undefined');
+  });
+
+  it('tryGetMessageDynamic returns formatted message when available', () => {
+    const testMessages = {
+      TRY_KEY: 'Count {value:number}',
+    };
+
+    render(
+      <TypedMessageProvider messages={testMessages}>
+        <DynamicTryComponent messageKey="TRY_KEY" params={{ value: 7 }} />
+      </TypedMessageProvider>
+    );
+
+    const element = screen.getByTestId('dynamic-try');
+    expect(element.textContent).toBe('Count 7');
+  });
+
+  it('TypedMessageDynamic renders dynamic message lookup', () => {
+    const testMessages = {
+      COMPONENT_KEY: 'Component message {item}',
+    };
+
+    render(
+      <TypedMessageProvider messages={testMessages}>
+        <TypedMessageDynamic
+          messageKey="COMPONENT_KEY"
+          params={{ item: 'value' }}
+        />
+      </TypedMessageProvider>
+    );
+
+    expect(screen.getByText('Component message value').textContent).toBe(
+      'Component message value'
+    );
   });
 });
