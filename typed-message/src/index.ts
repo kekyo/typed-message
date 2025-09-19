@@ -7,14 +7,16 @@ export {
   TypedMessageProvider,
   useTypedMessage,
   useTypedMessageDynamic,
+  useLocale,
 } from './provider';
 export { TypedMessage, TypedMessageDynamic } from './component';
-export { useTypedMessageLocale } from './useTypedMessageLocale';
+export { useLocaleController } from './useLocaleController';
 export type {
   LocaleLoadStatus,
-  TypedMessageLocaleResult,
-  UseTypedMessageLocaleOptions,
-} from './useTypedMessageLocale';
+  TypedMessageLocaleController,
+  UseLocaleControllerOptions,
+  LocaleState,
+} from './useLocaleController';
 
 // vite-plugin is server-side only, so exclude from client-side index.ts
 // export typedMessage from 'typed-message/vite'
@@ -29,3 +31,6 @@ export type {
   PlaceholderInfo,
   ParsedMessage,
 } from './types';
+
+// @prettier-max-ignore-deprecated
+export { useTypedMessageLocale } from './useLocaleController';

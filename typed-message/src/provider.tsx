@@ -10,9 +10,38 @@ import type {
   MessageItem,
   SimpleMessageItem,
 } from './types';
+import type {
+  TypedMessageLocaleController,
+  LocaleState,
+} from './useLocaleController';
 
 // Create Context
 const TypedMessageContext = createContext<MessageDictionary | null>(null);
+const LocaleControllerContext =
+  createContext<TypedMessageLocaleController | null>(null);
+
+const isLocaleController = (
+  value: MessageDictionary | TypedMessageLocaleController | undefined
+): value is TypedMessageLocaleController => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const candidate = value as Partial<TypedMessageLocaleController> & {
+    dictionary?: unknown;
+    setLocale?: unknown;
+    preload?: unknown;
+    locale?: unknown;
+    status?: unknown;
+  };
+  return (
+    typeof candidate.setLocale === 'function' &&
+    typeof candidate.preload === 'function' &&
+    typeof candidate.locale === 'string' &&
+    typeof candidate.status === 'string' &&
+    !!candidate.dictionary &&
+    typeof candidate.dictionary === 'object'
+  );
+};
 
 const MESSAGE_NOT_FOUND_PREFIX = 'MESSAGE_NOT_FOUND: ';
 
@@ -45,11 +74,20 @@ export const TypedMessageProvider = ({
   messages,
   children,
 }: TypedMessageProviderProps) => {
-  const ms = useMemo(() => messages ?? {}, [messages]);
+  const controller = isLocaleController(messages) ? messages : null;
+  const dictionary = useMemo(() => {
+    if (controller) {
+      return controller.dictionary;
+    }
+    return (messages as MessageDictionary | undefined) ?? {};
+  }, [controller, messages]);
+
   return (
-    <TypedMessageContext.Provider value={ms}>
-      {children}
-    </TypedMessageContext.Provider>
+    <LocaleControllerContext.Provider value={controller}>
+      <TypedMessageContext.Provider value={dictionary}>
+        {children}
+      </TypedMessageContext.Provider>
+    </LocaleControllerContext.Provider>
   );
 };
 
@@ -151,6 +189,31 @@ export const useTypedMessage = () => {
   );
 
   return getMessage;
+};
+
+/**
+ * React hook to access and mutate the active locale managed by a
+ * {@link TypedMessageLocaleController}.
+ *
+ * @throws {Error} When the surrounding provider was not given a locale controller.
+ */
+export const useLocale = (): LocaleState => {
+  const controller = useContext(LocaleControllerContext);
+
+  if (controller === null) {
+    throw new Error(
+      'useLocale must be used within a TypedMessageProvider configured with a locale controller.'
+    );
+  }
+
+  return useMemo<LocaleState>(
+    () => ({
+      locale: controller.locale,
+      status: controller.status,
+      setLocale: controller.setLocale,
+    }),
+    [controller.locale, controller.setLocale, controller.status]
+  );
 };
 
 /**

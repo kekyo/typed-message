@@ -311,37 +311,27 @@ export default App;
 
 #### Locale Switching Hook
 
-If you want to fetch locale dictionaries on demand from the server, use the `useTypedMessageLocale` hook to help.
-It handles downloading, caching, serializing requests through a mutex, and persisting the chosen locale in `localStorage`.
+If you want to fetch locale dictionaries on demand from the server, use the `useLocaleController()` hook and pass the returned controller to the provider. Descendant components can call `useLocale()` to inspect and mutate the active locale.
 
 ```tsx
-import { TypedMessageProvider, TypedMessage, useTypedMessageLocale } from 'typed-message';
-import messages, { locales as generatedLocales } from './generated/messages';
+import {
+  TypedMessageProvider,
+  TypedMessage,
+  useLocale,
+  useLocaleController,
+} from 'typed-message';
+import messages, locales from './generated/messages';
 
-const loadLocale = async (locale: string) => {
-  const module = await import(`../locale/${locale}.json`);
-  return module.default;
-};
+// Toolbar component for changing the locale
+const LocaleToolbar = () => {
+  // Pull the active locale and setter from anywhere in the tree
+  const { locale, status, setLocale } = useLocale();
 
-export const App = () => {
-  // Initialize locale switch hook
-  const { locale, status, dictionary, setLocale } = useTypedMessageLocale({
-    loadLocale,
-    fallbackLocale: 'fallback',
-    locales: generatedLocales,
-    initialLocale: navigator.language.split('-')[0],
-    storageKey: 'demo-locale',
-  });
-
-  // Displaying placeholder while loading locale
-  if (status === 'loading') {
-    return <p>Loading {locale}…</p>;
-  }
-
-  // Pass the returned dictionary directly to the provider
   return (
-    <TypedMessageProvider messages={dictionary}>
-      {/* Notify the hook when the locale changes */}
+    <div>
+      {/* Render a lightweight loading hint while the next locale is fetched */}
+      {status === 'loading' && <p>Loading {locale}…</p>}
+      {/* Notify the controller when the user picks another locale */}
       <select value={locale} onChange={(event) => setLocale(event.target.value)}>
         {generatedLocales.map((value) => (
           <option key={value} value={value}>
@@ -349,6 +339,33 @@ export const App = () => {
           </option>
         ))}
       </select>
+    </div>
+  );
+};
+
+// Read the dictionary file for the locale specified by the argument
+const loadLocale = async (locale: string) => {
+  const response = await fetch(`/locale/${locale}.json`);
+  if (!response.ok) {
+    throw new Error(`Failed to load locale: ${locale}`);
+  }
+  return (await response.json()) as Record<string, string>;
+};
+
+export const App = () => {
+  // Create a shared locale controller that keeps dictionaries cached & persisted
+  const controller = useLocaleController({
+    loadLocale,
+    fallbackLocale: 'fallback',
+    locales,
+    initialLocale: navigator.language.split('-')[0],
+    storageKey: 'saved-locale', // Omit this to keep locale in memory only
+  });
+
+  return (
+    // Pass the controller to the provider so every descendant can call useLocale
+    <TypedMessageProvider messages={controller}>
+      <LocaleToolbar />
       <p>
         <TypedMessage message={messages.WELCOME_MESSAGE} />
       </p>
@@ -357,7 +374,7 @@ export const App = () => {
 };
 ```
 
-Pass the hook’s `dictionary` directly to `TypedMessageProvider`; if it is empty the provider falls back to the generated message metadata automatically.
+`useLocaleController` keeps dictionaries cached and persisted, while `useLocale` exposes just the `locale`, `status`, and `setLocale` trio wherever you need to build UI. If the active dictionary ends up empty, the provider still falls back to the generated message metadata automatically.
 
 ----
 
