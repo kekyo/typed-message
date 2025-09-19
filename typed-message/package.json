@@ -63,10 +63,10 @@
     "@types/react-dom": ">=18.0.0",
     "@vitejs/plugin-react-swc": ">=3.5.0",
     "jsdom": ">=23.0.0",
-    "prettier-max": ">=1.6.0",
+    "prettier-max": ">=1.8.0",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0",
-    "screw-up": ">=1.7.0",
+    "screw-up": ">=1.8.0",
     "typescript": ">=5.0.0",
     "vite-plugin-dts": ">=4.5.4",
     "vitest": ">=1.6.0"

@@ -444,7 +444,7 @@ interface MessageItem<T extends Record<string, any>> {
 
 ### useTypedMessage
 
-TypedMessageProviderからメッセージ取得関数を取得するフック。この関数はメッセージアイテムを受け取り、辞書からメッセージを検索して、見つからない場合はfallbackテンプレートを使用します。
+TypedMessageProviderからメッセージ取得関数を取得するフックです。この関数はメッセージアイテムを受け取り、辞書からメッセージを検索して、見つからない場合はfallbackテンプレートを使用します。
 
 ```typescript
 const getMessage = useTypedMessage();
@@ -454,6 +454,39 @@ const simpleResult = getMessage(simpleMessage);
 
 // パラメータ付きメッセージ取得（オブジェクト形式）
 const paramResult = getMessage(paramMessage, { name: "太郎", age: 30 });
+```
+
+### useTypedMessageDynamic
+
+この関数は、コンパイル時にキーが特定できない場合に利用するフックです。文字列キーと任意のプレースホルダーパラメータを受け取る `getMessageDynamic` と `tryGetMessageDynamic` を返します。
+
+```typescript
+const { getMessageDynamic, tryGetMessageDynamic } = useTypedMessageDynamic();
+
+const resolved = getMessageDynamic(runtimeKey, { name: '太郎' });
+// キーが見つからない場合は `MESSAGE_NOT_FOUND: ${runtimeKey}` が返ります
+
+const optionalValue = tryGetMessageDynamic(runtimeKey, { name: '太郎' });
+// キーが見つからない場合は undefined を返すので、呼び出し側で自由に扱えます
+```
+
+`getMessageDynamic` はキー未存在時に明示的な文字列を表示したい場合に利用します。`tryGetMessageDynamic` はキー未存在時に `undefined` を返し、UIを非表示にするなどの判断を利用者側に委ねられます。
+
+### TypedMessageDynamic
+
+JSX から `getMessageDynamic` と同じ動作でメッセージを解決するコンポーネントです。キーが見つからない場合は常に `MESSAGE_NOT_FOUND: {key}` を描画します。
+
+#### Props
+
+| プロパティ | 型 | 説明 |
+|------------|-----|------|
+| `messageKey` | `string` | 辞書を検索する実行時キー |
+| `params` | `Record<string, unknown>` (任意) | プレースホルダに渡す値 |
+
+#### 使用例
+
+```tsx
+<TypedMessageDynamic messageKey={runtimeKey} params={{ name: '太郎' }} />
 ```
 
 ## 高度な機能

@@ -455,6 +455,39 @@ const simpleResult = getMessage(simpleMessage);
 const paramResult = getMessage(paramMessage, { name: "John", age: 30 });
 ```
 
+### useTypedMessageDynamic
+
+Provides an escape hatch for runtime key resolution. It returns `getMessageDynamic` and `tryGetMessageDynamic`, both of which accept a message dictionary key as a string and optional formatting parameters.
+
+```typescript
+const { getMessageDynamic, tryGetMessageDynamic } = useTypedMessageDynamic();
+
+const resolved = getMessageDynamic(runtimeKey, { name: 'Alice' });
+// resolved will be `MESSAGE_NOT_FOUND: ${runtimeKey}` when the key is missing
+
+const optionalValue = tryGetMessageDynamic(runtimeKey, { name: 'Alice' });
+// optionalValue is either the resolved string or undefined when the key is missing
+```
+
+`getMessageDynamic` is useful when you need a visible fallback string (`MESSAGE_NOT_FOUND: {key}`) for missing runtime keys. `tryGetMessageDynamic` defers the decision to the caller by returning `undefined` for missing keys, allowing custom handling such as hiding UI elements.
+
+### TypedMessageDynamic
+
+React component that mirrors `getMessageDynamic` for JSX usage. It always renders the resolved string, or `MESSAGE_NOT_FOUND: {key}` when the key cannot be found.
+
+#### Props
+
+| Property | Type | Description |
+|----------|---------|------------|
+| `messageKey` | `string` | Runtime key to look up in the message dictionary |
+| `params` | `Record<string, unknown>` (optional) | Placeholder values for formatting |
+
+#### Example
+
+```tsx
+<TypedMessageDynamic messageKey={runtimeKey} params={{ name: 'Alice' }} />
+```
+
 ## Advanced Features
 
 ### Placeholder Type Validation
@@ -594,4 +627,3 @@ Result: "Hello John, welcome!" (unused parameters are ignored)
 ## License
 
 MIT License. See [LICENSE](./LICENSE) for details.
-
