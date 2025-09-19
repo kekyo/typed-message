@@ -60,9 +60,17 @@ Parameter type extraction is done automatically by the Vite plugin. This means y
 - Parameterized Messages - Dynamic message formatting using placeholders (type-safe)
 - Vite Optimized - Automatic code generation via Vite plugin
 
-For more information, [see repository documents](http://github.com/kekyo/typed-message/).
-
 ----
+
+## Documentation
+
+[See the repository documentation](http://github.com/kekyo/typed-message/).
+
+## Discussions and Pull Requests
+
+For discussions, please refer to the [GitHub Discussions page](https://github.com/kekyo/typed-message/discussions). We have currently stopped issue-based discussions.
+
+Pull requests are welcome! Please submit them as diffs against the `develop` branch and squashed changes before send.
 
 ## License
 

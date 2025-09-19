@@ -625,6 +625,12 @@ export const messages = {
 
 ----
 
+## ディスカッションとPR
+
+ディスカッションは、 [GitHubのディスカッションページ](https://github.com/kekyo/typed-message/discussions) を参照して下さい。現在はissueベースのディスカッションを取りやめています。
+
+PRはWelcomeです。`develop`ブランチからの差分で送って下さい。送信する前に、あなたの変更をsquashしておいて下さい。
+
 ## ライセンス
 
-MIT License。詳細は[LICENSE](./LICENSE)をご覧ください。
+Under MIT.
