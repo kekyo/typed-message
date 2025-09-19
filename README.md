@@ -309,6 +309,56 @@ const App = () => {
 export default App;
 ```
 
+#### Locale Switching Hook
+
+If you want to fetch locale dictionaries on demand from the server, use the `useTypedMessageLocale` hook to help.
+It handles downloading, caching, serializing requests through a mutex, and persisting the chosen locale in `localStorage`.
+
+```tsx
+import { TypedMessageProvider, TypedMessage, useTypedMessageLocale } from 'typed-message';
+import messages, { locales as generatedLocales } from './generated/messages';
+
+const loadLocale = async (locale: string) => {
+  const module = await import(`../locale/${locale}.json`);
+  return module.default;
+};
+
+export const App = () => {
+  // Initialize locale switch hook
+  const { locale, status, dictionary, setLocale } = useTypedMessageLocale({
+    loadLocale,
+    fallbackLocale: 'fallback',
+    locales: generatedLocales,
+    initialLocale: navigator.language.split('-')[0],
+    storageKey: 'demo-locale',
+  });
+
+  // Displaying placeholder while loading locale
+  if (status === 'loading') {
+    return <p>Loading {locale}…</p>;
+  }
+
+  // Pass the returned dictionary directly to the provider
+  return (
+    <TypedMessageProvider messages={dictionary}>
+      {/* Notify the hook when the locale changes */}
+      <select value={locale} onChange={(event) => setLocale(event.target.value)}>
+        {generatedLocales.map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
+      <p>
+        <TypedMessage message={messages.WELCOME_MESSAGE} />
+      </p>
+    </TypedMessageProvider>
+  );
+};
+```
+
+Pass the hook’s `dictionary` directly to `TypedMessageProvider`; if it is empty the provider falls back to the generated message metadata automatically.
+
 ----
 
 ## API Reference
