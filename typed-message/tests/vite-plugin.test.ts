@@ -105,6 +105,45 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).toContain('as SimpleMessageItem');
   });
 
+  it('sanitizes invalid locale keys while preserving original metadata', async () => {
+    const localeData = {
+      'greet-user': 'Hello dashed',
+      'greet user': 'Hello spaced',
+      '123start': 'Number prefixed',
+      default: 'Reserved keyword',
+    };
+
+    writeFileSync(
+      join(localeDir, 'en.json'),
+      JSON.stringify(localeData, null, 2)
+    );
+
+    const plugin = typedMessage({
+      localeDir: 'locale',
+      outputPath: 'src/generated/messages.ts',
+    });
+
+    const mockConfig = { root: testDir };
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
+
+    const generatedCode = readFileSync(outputFile, 'utf-8');
+
+    expect(generatedCode).toContain('greet_user: { ');
+    expect(generatedCode).toContain('key: "greet-user"');
+    expect(generatedCode).toContain('greet_user_1: { ');
+    expect(generatedCode).toContain('key: "greet user"');
+    expect(generatedCode).toContain('_123start: { ');
+    expect(generatedCode).toContain('key: "123start"');
+    expect(generatedCode).toContain('_default: { ');
+    expect(generatedCode).toContain('key: "default"');
+
+    expect(generatedCode).toContain('* greet-user: Hello dashed');
+    expect(generatedCode).toContain('* greet user: Hello spaced');
+    expect(generatedCode).toContain('* 123start: Number prefixed');
+    expect(generatedCode).toContain('* default: Reserved keyword');
+  });
+
   it('aggregates multiple locale files according to priority order', async () => {
     // Create test data
     const defaultData = {

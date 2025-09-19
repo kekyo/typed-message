@@ -267,17 +267,126 @@ const checkPlaceholderTypeConsistency = async (
   return { aggregatedMessages, warnings, invalidFiles };
 };
 
+const RESERVED_WORDS = new Set([
+  'abstract',
+  'any',
+  'as',
+  'asserts',
+  'async',
+  'await',
+  'boolean',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'declare',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'from',
+  'function',
+  'get',
+  'if',
+  'implements',
+  'import',
+  'in',
+  'infer',
+  'instanceof',
+  'interface',
+  'is',
+  'keyof',
+  'let',
+  'module',
+  'namespace',
+  'never',
+  'new',
+  'null',
+  'number',
+  'object',
+  'of',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'readonly',
+  'require',
+  'return',
+  'set',
+  'static',
+  'string',
+  'super',
+  'switch',
+  'symbol',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'type',
+  'typeof',
+  'undefined',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
+]);
+
+const sanitizeIdentifier = (input: string): string => {
+  let sanitized = input.replace(/[^A-Za-z0-9_$]/g, '_');
+
+  if (sanitized.length === 0) {
+    sanitized = '_';
+  }
+
+  if (/^[^A-Za-z_$]/.test(sanitized)) {
+    sanitized = `_${sanitized}`;
+  }
+
+  if (RESERVED_WORDS.has(sanitized)) {
+    sanitized = `_${sanitized}`;
+  }
+
+  return sanitized;
+};
+
+const ensureUniqueIdentifier = (
+  baseIdentifier: string,
+  usedIdentifiers: Set<string>
+): string => {
+  let candidate = baseIdentifier;
+  let index = 1;
+
+  while (usedIdentifiers.has(candidate)) {
+    candidate = `${baseIdentifier}_${index}`;
+    index++;
+  }
+
+  usedIdentifiers.add(candidate);
+  return candidate;
+};
+
 // Function to generate JSDoc comments for normal messages
-const generateNormalJSDoc = (fallback: string): string => {
+const generateNormalJSDoc = (originalKey: string, fallback: string): string => {
   const escapedFallback = fallback.replace(/\*/g, '\\*');
   return `  /**
-   * Messgae: "${escapedFallback}"
+   * ${originalKey}: ${escapedFallback}
    */`;
 };
 
 // Function to generate JSDoc comments for warnings
 const generateWarningJSDoc = (
   warning: MessageWarning,
+  originalKey: string,
   fallback: string
 ): string => {
   const escapedFallback = fallback.replace(/\*/g, '\\*');
@@ -291,7 +400,7 @@ const generateWarningJSDoc = (
     .join('\n');
 
   return `  /**
-   * Messgae: "${escapedFallback}"
+   * ${originalKey}: ${escapedFallback}
    * Warning: Placeholder types do not match across locales
 ${conflictDescriptions}
    */`;
@@ -441,19 +550,26 @@ const generateTypeScriptCode = (
   const entries = Object.entries(messages);
   const warningMap = new Map(warnings.map((w) => [w.key, w]));
 
+  const usedIdentifiers = new Set<string>();
+
   const messageItems = entries
-    .map(([key, message]) => {
-      const escapedKey = JSON.stringify(key);
-      const warning = warningMap.get(key);
+    .map(([originalKey, message]) => {
+      const baseIdentifier = sanitizeIdentifier(originalKey);
+      const sanitizedKey = ensureUniqueIdentifier(
+        baseIdentifier,
+        usedIdentifiers
+      );
+      const escapedKey = JSON.stringify(originalKey);
+      const warning = warningMap.get(originalKey);
       const jsDocComment = warning
-        ? generateWarningJSDoc(warning, message.fallback)
-        : generateNormalJSDoc(message.fallback);
+        ? generateWarningJSDoc(warning, originalKey, message.fallback)
+        : generateNormalJSDoc(originalKey, message.fallback);
 
       if (message.placeholders.length === 0) {
         // SimpleMessageItem for non-parameterized messages
         const escapedFallback = JSON.stringify(message.fallback);
         return `${jsDocComment}
-  ${key}: { 
+  ${sanitizedKey}: { 
     key: ${escapedKey}, 
     fallback: ${escapedFallback} 
   } as SimpleMessageItem`;
@@ -462,7 +578,7 @@ const generateTypeScriptCode = (
         const escapedFallback = JSON.stringify(message.fallback);
         const typeString = generateObjectTypeString(message.placeholders);
         return `${jsDocComment}
-  ${key}: { 
+  ${sanitizedKey}: { 
     key: ${escapedKey}, 
     fallback: ${escapedFallback} 
   } as MessageItem<${typeString}>`;

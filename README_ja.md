@@ -253,6 +253,9 @@ export default App;
 
 `TypedMessageProvider`へのメッセージ辞書の供給方法は自由に決定できます。上記の例ではTypeScriptの`import`を使用して、直接ソースコード上にJSON辞書を挿入しましたが、外部サーバーからダウンロードして設定するなど、様々な手法が考えられます。
 
+`messages`内のフィールド名は、基本的にメッセージファイルに指定したシンボル名でそのまま定義されます。
+しかし、TypeScriptで無効な識別子（例: `HELLO-WORLD`）が使用されていた場合は、安全なフィールド名へサニタイズされます（`messages.HELLO_WORLD`）。
+
 #### useTypedMessageフックを直接使用する場合
 
 ```tsx

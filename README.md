@@ -252,6 +252,9 @@ export default App
 
 You can freely decide how to supply message dictionaries to `TypedMessageProvider`. In the above example, we used TypeScript `import` to insert the JSON dictionary directly on the source code, but there are many other possible methods, such as downloading from an external server and setting up.
 
+Field names within `messages` are generally defined using the exact symbol names specified in the message files.
+However, if an invalid identifier in TypeScript (e.g., `HELLO-WORLD`) is used, it will be sanitized to a safe field name (e.g., `messages.HELLO_WORLD`).
+
 #### Using useTypedMessage Hook Directly
 
 ```tsx
