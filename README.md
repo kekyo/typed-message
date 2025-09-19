@@ -179,6 +179,8 @@ Supported types:
 If you are doing a manual build, please build it.
 The Vite plugin is installed correctly, just edit the message file and the `src/generated/messages.ts` file should be generated automatically!
 
+The generated module exports both the `messages` map and a `locales` array. `locales` lists every detected locale symbol (file name without extension) except the fallback locale, so you can drive UI pickers or debugging tools straight from the generated data.
+
 Now that you are ready, all you have to do is use the message.
 
 #### TypedMessage Component (Recommended)
@@ -306,6 +308,56 @@ const App = () => {
 
 export default App;
 ```
+
+#### Locale Switching Hook
+
+If you want to fetch locale dictionaries on demand from the server, use the `useTypedMessageLocale` hook to help.
+It handles downloading, caching, serializing requests through a mutex, and persisting the chosen locale in `localStorage`.
+
+```tsx
+import { TypedMessageProvider, TypedMessage, useTypedMessageLocale } from 'typed-message';
+import messages, { locales as generatedLocales } from './generated/messages';
+
+const loadLocale = async (locale: string) => {
+  const module = await import(`../locale/${locale}.json`);
+  return module.default;
+};
+
+export const App = () => {
+  // Initialize locale switch hook
+  const { locale, status, dictionary, setLocale } = useTypedMessageLocale({
+    loadLocale,
+    fallbackLocale: 'fallback',
+    locales: generatedLocales,
+    initialLocale: navigator.language.split('-')[0],
+    storageKey: 'demo-locale',
+  });
+
+  // Displaying placeholder while loading locale
+  if (status === 'loading') {
+    return <p>Loading {locale}…</p>;
+  }
+
+  // Pass the returned dictionary directly to the provider
+  return (
+    <TypedMessageProvider messages={dictionary}>
+      {/* Notify the hook when the locale changes */}
+      <select value={locale} onChange={(event) => setLocale(event.target.value)}>
+        {generatedLocales.map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
+      <p>
+        <TypedMessage message={messages.WELCOME_MESSAGE} />
+      </p>
+    </TypedMessageProvider>
+  );
+};
+```
+
+Pass the hook’s `dictionary` directly to `TypedMessageProvider`; if it is empty the provider falls back to the generated message metadata automatically.
 
 ----
 

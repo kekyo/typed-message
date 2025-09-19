@@ -180,6 +180,8 @@ export default defineConfig({
 手動ビルドを行っている場合は、ビルドして下さい。
 Viteプラグインの導入が正しければ、メッセージファイルを編集するだけで、`src/generated/messages.ts`ファイルが自動生成されるはずです!
 
+生成されたモジュールは `messages` マップと `locales` 配列の両方をエクスポートします。`locales` は検出されたロケール識別子（拡張子を除いたファイル名）からフォールバックロケールを除いて列挙しているので、そのままロケール選択 UI やデバッグ用途に利用できます。
+
 これで準備は整ったので、後はメッセージを使うだけです。
 
 #### TypedMessageコンポーネント（推奨）
@@ -307,6 +309,56 @@ const App = () => {
 
 export default App;
 ```
+
+#### ロケール切り替え用フック
+
+サーバーからオンデマンドでロケール辞書を読み込みたい場合は、 `useTypedMessageLocale` フックを使用することが出来ます。
+辞書のダウンロード、キャッシュ、ミューテックスによる直列化、選択ロケールの `localStorage` 永続化までまとめて面倒を見てくれます。
+
+```tsx
+import { TypedMessageProvider, TypedMessage, useTypedMessageLocale } from 'typed-message';
+import messages, locales from './generated/messages';
+
+const loadLocale = async (locale: string) => {
+  const module = await import(`../locale/${locale}.json`);
+  return module.default;
+};
+
+export const App = () => {
+  // ロケール切り替えフックの初期化
+  const { locale, status, dictionary, setLocale } = useTypedMessageLocale({
+    loadLocale,
+    fallbackLocale: 'fallback',
+    locales: locales,
+    initialLocale: navigator.language.split('-')[0],
+    storageKey: 'demo-locale',
+  });
+
+  // ロケールロード中は代替表示
+  if (status === 'loading') {
+    return <p>{locale} を読み込み中…</p>;
+  }
+
+  // 返されたdictionaryをそのままプロバイダーに渡す
+  return (
+    <TypedMessageProvider messages={dictionary}>
+      {/* ロケールが変更されたらフックに通知する */}
+      <select value={locale} onChange={(event) => setLocale(event.target.value)}>
+        {locales.map((l) => (
+          <option key={l} value={l}>
+            {value}
+          </option>
+        ))}
+      </select>
+      <p>
+        <TypedMessage message={messages.WELCOME_MESSAGE} />
+      </p>
+    </TypedMessageProvider>
+  );
+};
+```
+
+フックから返された `dictionary` はそのまま `TypedMessageProvider` に渡せます。空オブジェクトの場合でも、プロバイダー側で自動的にフォールバックが解決されます。
 
 ----
 

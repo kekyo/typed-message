@@ -9,6 +9,12 @@ export {
   useTypedMessageDynamic,
 } from './provider';
 export { TypedMessage, TypedMessageDynamic } from './component';
+export { useTypedMessageLocale } from './useTypedMessageLocale';
+export type {
+  LocaleLoadStatus,
+  TypedMessageLocaleResult,
+  UseTypedMessageLocaleOptions,
+} from './useTypedMessageLocale';
 
 // vite-plugin is server-side only, so exclude from client-side index.ts
 // export typedMessage from 'typed-message/vite'

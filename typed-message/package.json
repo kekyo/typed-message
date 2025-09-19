@@ -48,6 +48,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "async-primitives": ">=1.2.0",
     "debug": ">=4.4.0",
     "json5": ">=2.0.0",
     "react": ">=18.0.0",
