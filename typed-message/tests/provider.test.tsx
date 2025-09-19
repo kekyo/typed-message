@@ -1,13 +1,19 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import React, { createRef, forwardRef, useImperativeHandle } from 'react';
+import { render, screen, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
 import {
   TypedMessageProvider,
   useTypedMessage,
   useTypedMessageDynamic,
+  useLocale,
 } from '../src/provider';
 import { TypedMessageDynamic } from '../src/component';
 import type { MessageItem } from '../src/types';
+import {
+  useLocaleController,
+  type LocaleState,
+  type UseLocaleControllerOptions,
+} from '../src/useLocaleController';
 
 // Test component
 const TestComponent: React.FC = () => {
@@ -75,6 +81,36 @@ const DynamicTryComponent: React.FC<{
     </div>
   );
 };
+
+const LocaleConsumer = forwardRef<LocaleState>((_, ref) => {
+  const localeState = useLocale();
+  useImperativeHandle(ref, () => localeState, [localeState]);
+
+  return (
+    <>
+      <span data-testid="current-locale">{localeState.locale}</span>
+      <span data-testid="current-status">{localeState.status}</span>
+    </>
+  );
+});
+
+LocaleConsumer.displayName = 'LocaleConsumer';
+
+const LocaleControllerHarness = forwardRef<
+  LocaleState,
+  { options: UseLocaleControllerOptions }
+>(({ options }, ref) => {
+  const controller = useLocaleController(options);
+
+  return (
+    <TypedMessageProvider messages={controller}>
+      <TestComponent />
+      <LocaleConsumer ref={ref} />
+    </TypedMessageProvider>
+  );
+});
+
+LocaleControllerHarness.displayName = 'LocaleControllerHarness';
 
 describe('TypedMessageProvider', () => {
   it('returns dictionary value when localized message exists', () => {
@@ -371,6 +407,67 @@ describe('TypedMessageProvider', () => {
 
     expect(screen.getByText('Component message value').textContent).toBe(
       'Component message value'
+    );
+  });
+
+  it('exposes locale controller through useLocale when provider receives controller', async () => {
+    const dictionaries: Record<string, Record<string, string>> = {
+      en: { TEST_KEY: 'Localized EN' },
+      ja: { TEST_KEY: 'Localized JA' },
+      fallback: { TEST_KEY: 'Fallback message' },
+    };
+
+    const loadLocale = vi.fn(async (locale: string) => {
+      await Promise.resolve();
+      const dictionary = dictionaries[locale];
+      if (!dictionary) {
+        throw new Error(`Unknown locale: ${locale}`);
+      }
+      return { ...dictionary };
+    });
+
+    const options: UseLocaleControllerOptions = {
+      loadLocale,
+      initialLocale: 'en',
+      fallbackLocale: 'fallback',
+    };
+
+    const ref = createRef<LocaleState>();
+
+    render(<LocaleControllerHarness ref={ref} options={options} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('current-status').textContent).toBe('ready');
+    });
+
+    expect(screen.getByTestId('current-locale').textContent).toBe('en');
+    expect(screen.getByTestId('message').textContent).toBe('Localized EN');
+
+    await act(async () => {
+      await ref.current!.setLocale('ja');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('current-locale').textContent).toBe('ja');
+    });
+
+    expect(screen.getByTestId('message').textContent).toBe('Localized JA');
+  });
+
+  it('useLocale throws when provider is configured with a plain dictionary', () => {
+    const InvalidConsumer: React.FC = () => {
+      useLocale();
+      return null;
+    };
+
+    expect(() => {
+      render(
+        <TypedMessageProvider messages={{}}>
+          <InvalidConsumer />
+        </TypedMessageProvider>
+      );
+    }).toThrow(
+      'useLocale must be used within a TypedMessageProvider configured with a locale controller.'
     );
   });
 });

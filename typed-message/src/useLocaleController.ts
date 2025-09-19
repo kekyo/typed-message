@@ -8,14 +8,14 @@ import { createMutex } from 'async-primitives';
 import type { MessageDictionary } from './types';
 
 /**
- * Status flags exposed by {@link useTypedMessageLocale}
+ * Status flags exposed by {@link useLocaleController}
  */
 export type LocaleLoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 /**
- * Options for {@link useTypedMessageLocale}
+ * Options for {@link useLocaleController}
  */
-export interface UseTypedMessageLocaleOptions {
+export interface UseLocaleControllerOptions {
   /**
    * Initial locale the hook should attempt to load when mounted.
    */
@@ -34,15 +34,15 @@ export interface UseTypedMessageLocaleOptions {
   locales?: readonly string[];
   /**
    * Storage key used for persisting the last successful locale.
-   * Defaults to `typed-message:locale`.
+   * Defaults to omit persisting.
    */
   storageKey?: string;
 }
 
 /**
- * Result object returned by {@link useTypedMessageLocale}
+ * Result object returned by {@link useLocaleController}
  */
-export interface TypedMessageLocaleResult {
+export interface TypedMessageLocaleController {
   /**
    * Currently active locale (last successfully loaded).
    */
@@ -70,6 +70,15 @@ export interface TypedMessageLocaleResult {
 }
 
 /**
+ * Simplified locale state exposed by {@link useLocale}.
+ */
+export interface LocaleState {
+  locale: string;
+  status: LocaleLoadStatus;
+  setLocale: TypedMessageLocaleController['setLocale'];
+}
+
+/**
  * React hook that encapsulates locale loading, caching and persistence.
  *
  * The hook keeps an in-memory cache of message dictionaries, serializes load
@@ -77,16 +86,11 @@ export interface TypedMessageLocaleResult {
  * `localStorage`. Consumers simply pipe the returned dictionary into
  * {@link TypedMessageProvider} to update rendered messages.
  */
-export const useTypedMessageLocale = (
-  options: UseTypedMessageLocaleOptions
-): TypedMessageLocaleResult => {
-  const {
-    initialLocale,
-    fallbackLocale,
-    loadLocale,
-    locales,
-    storageKey = 'typed-message:locale',
-  } = options;
+export const useLocaleController = (
+  options: UseLocaleControllerOptions
+): TypedMessageLocaleController => {
+  const { initialLocale, fallbackLocale, loadLocale, locales, storageKey } =
+    options;
 
   const cacheRef = useRef(new Map<string, MessageDictionary>());
   const loadLocaleRef = useRef(loadLocale);
@@ -99,6 +103,7 @@ export const useTypedMessageLocale = (
   }, [loadLocale]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
@@ -108,30 +113,32 @@ export const useTypedMessageLocale = (
     return typeof window !== 'undefined' && !!window.localStorage;
   }, []);
 
+  const persistenceKey = storageKey ?? 'typed-message:locale';
+
   const readStoredLocale = useCallback(() => {
-    if (!canUseStorage || !storageKey) {
+    if (!canUseStorage || storageKey === undefined) {
       return undefined;
     }
     try {
-      const stored = window.localStorage.getItem(storageKey);
+      const stored = window.localStorage.getItem(persistenceKey);
       return stored ?? undefined;
     } catch (_error) {
       return undefined;
     }
-  }, [canUseStorage, storageKey]);
+  }, [canUseStorage, persistenceKey, storageKey]);
 
   const persistLocale = useCallback(
     (value: string) => {
-      if (!canUseStorage || !storageKey) {
+      if (!canUseStorage || storageKey === undefined) {
         return;
       }
       try {
-        window.localStorage.setItem(storageKey, value);
+        window.localStorage.setItem(persistenceKey, value);
       } catch (_error) {
         // Ignore persistence failures (e.g. private mode quota exceeded)
       }
     },
-    [canUseStorage, storageKey]
+    [canUseStorage, persistenceKey, storageKey]
   );
 
   const resolveInitialLocale = useCallback(() => {
@@ -297,3 +304,8 @@ export const useTypedMessageLocale = (
     preload,
   };
 };
+
+/**
+ * @deprecated Use useLocaleController instead.
+ */
+export const useTypedMessageLocale = useLocaleController;

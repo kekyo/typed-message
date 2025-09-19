@@ -3,6 +3,7 @@
 // Under MIT
 // https://github.com/kekyo/typed-message
 
+import type { TypedMessageLocaleController } from './useLocaleController';
 /**
  * Type definition for non-parameterized message items
  *
@@ -85,10 +86,11 @@ export interface MessageDictionary {
  */
 export interface TypedMessageProviderProps {
   /**
-   * Message dictionary containing key-value pairs of message identifiers and their translations.
-   * If omitted, defaults to an empty object.
+   * Message dictionary or locale controller supplying translated text.
+   * If a controller is provided, its dictionary will be used and locale operations
+   * will be exposed to descendant components.
    */
-  messages?: MessageDictionary;
+  messages?: MessageDictionary | TypedMessageLocaleController;
   /** Child React components that will have access to the message context */
   children?: React.ReactNode;
 }

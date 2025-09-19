@@ -312,44 +312,61 @@ export default App;
 
 #### ロケール切り替え用フック
 
-サーバーからオンデマンドでロケール辞書を読み込みたい場合は、 `useTypedMessageLocale` フックを使用することが出来ます。
-辞書のダウンロード、キャッシュ、ミューテックスによる直列化、選択ロケールの `localStorage` 永続化までまとめて面倒を見てくれます。
+サーバーからオンデマンドでロケール辞書を読み込みたい場合は、 `useLocaleController()` フックを利用し、戻り値のコントローラーをプロバイダーに渡します。配下のコンポーネントでは `useLocale()` を使って現在のロケール情報や切り替え操作を行えます。
 
 ```tsx
-import { TypedMessageProvider, TypedMessage, useTypedMessageLocale } from 'typed-message';
-import messages, locales from './generated/messages';
+import {
+  TypedMessageProvider,
+  TypedMessage,
+  useLocale,
+  useLocaleController,
+} from 'typed-message';
+import { messages, locales } from './generated/messages';
 
-const loadLocale = async (locale: string) => {
-  const module = await import(`../locale/${locale}.json`);
-  return module.default;
-};
+// ロケールを変更するツールバーのコンポーネント
+const LocaleToolbar = () => {
+  // ツリー内の任意の場所で現在のロケールと切り替え関数を取得
+  const { locale, status, setLocale } = useLocale();
 
-export const App = () => {
-  // ロケール切り替えフックの初期化
-  const { locale, status, dictionary, setLocale } = useTypedMessageLocale({
-    loadLocale,
-    fallbackLocale: 'fallback',
-    locales: locales,
-    initialLocale: navigator.language.split('-')[0],
-    storageKey: 'demo-locale',
-  });
-
-  // ロケールロード中は代替表示
-  if (status === 'loading') {
-    return <p>{locale} を読み込み中…</p>;
-  }
-
-  // 返されたdictionaryをそのままプロバイダーに渡す
   return (
-    <TypedMessageProvider messages={dictionary}>
-      {/* ロケールが変更されたらフックに通知する */}
+    <div>
+      {/* 次のロケール取得中は簡易的なロード表示を出す */}
+      {status === 'loading' && <p>{locale} を読み込み中…</p>}
+      {/* ユーザー操作でロケールが変わったことをコントローラーへ通知 */}
       <select value={locale} onChange={(event) => setLocale(event.target.value)}>
-        {locales.map((l) => (
-          <option key={l} value={l}>
+        {generatedLocales.map((value) => (
+          <option key={value} value={value}>
             {value}
           </option>
         ))}
       </select>
+    </div>
+  );
+};
+
+// 引数で指定されたロケールの辞書ファイルを読み取る
+const loadLocale = async (locale: string) => {
+  const response = await fetch(`/locale/${locale}.json`);
+  if (!response.ok) {
+    throw new Error(`ロケール ${locale} の取得に失敗しました`);
+  }
+  return (await response.json()) as Record<string, string>;
+};
+
+export const App = () => {
+  // 辞書の読み込み・キャッシュ・永続化をまとめて扱うコントローラーを生成
+  const controller = useLocaleController({
+    loadLocale,
+    fallbackLocale: 'fallback',
+    locales,
+    initialLocale: navigator.language.split('-')[0],
+    storageKey: 'saved-locale', // 指定しなければ永続化は行われません
+  });
+
+  return (
+    // Provider にコントローラーを渡し、配下で useLocale が使えるようにする
+    <TypedMessageProvider messages={controller}>
+      <LocaleToolbar />
       <p>
         <TypedMessage message={messages.WELCOME_MESSAGE} />
       </p>
@@ -358,7 +375,7 @@ export const App = () => {
 };
 ```
 
-フックから返された `dictionary` はそのまま `TypedMessageProvider` に渡せます。空オブジェクトの場合でも、プロバイダー側で自動的にフォールバックが解決されます。
+`useLocaleController` が辞書の取得・キャッシュ・永続化を担当し、`useLocale` は任意のコンポーネントから `locale` / `status` / `setLocale` の操作だけを取り出せます。辞書が空の場合でも、プロバイダー側で自動的にフォールバックメッセージが利用されます。
 
 ----
 

@@ -10,10 +10,10 @@ import {
 } from 'vitest';
 import { render, screen, act, cleanup, waitFor } from '@testing-library/react';
 import {
-  useTypedMessageLocale,
-  type TypedMessageLocaleResult,
-  type UseTypedMessageLocaleOptions,
-} from '../src/useTypedMessageLocale';
+  useLocaleController,
+  type TypedMessageLocaleController,
+  type UseLocaleControllerOptions,
+} from '../src/useLocaleController';
 
 const dictionaries: Record<string, Record<string, string>> = {
   en: { GREETING: 'Hello EN' },
@@ -43,12 +43,12 @@ const createLoader = (
 };
 
 interface HarnessProps {
-  options: UseTypedMessageLocaleOptions;
+  options: UseLocaleControllerOptions;
 }
 
-const HookHarness = forwardRef<TypedMessageLocaleResult, HarnessProps>(
+const HookHarness = forwardRef<TypedMessageLocaleController, HarnessProps>(
   ({ options }, ref) => {
-    const result = useTypedMessageLocale(options);
+    const result = useLocaleController(options);
     useImperativeHandle(ref, () => result, [result]);
 
     return (
@@ -64,7 +64,7 @@ const HookHarness = forwardRef<TypedMessageLocaleResult, HarnessProps>(
 
 HookHarness.displayName = 'HookHarness';
 
-describe('useTypedMessageLocale', () => {
+describe('useLocaleController', () => {
   beforeEach(() => {
     localStorage.clear();
   });
@@ -76,7 +76,7 @@ describe('useTypedMessageLocale', () => {
 
   it('loads the initial locale and exposes the dictionary', async () => {
     const loader = createLoader();
-    const ref = createRef<TypedMessageLocaleResult>();
+    const ref = createRef<TypedMessageLocaleController>();
 
     render(
       <HookHarness
@@ -100,7 +100,7 @@ describe('useTypedMessageLocale', () => {
 
   it('preloads specified locales without switching the active locale', async () => {
     const loader = createLoader();
-    const ref = createRef<TypedMessageLocaleResult>();
+    const ref = createRef<TypedMessageLocaleController>();
 
     render(
       <HookHarness
@@ -129,7 +129,7 @@ describe('useTypedMessageLocale', () => {
 
   it('loads a new locale once and reuses the cached dictionary afterwards', async () => {
     const loader = createLoader();
-    const ref = createRef<TypedMessageLocaleResult>();
+    const ref = createRef<TypedMessageLocaleController>();
 
     render(
       <HookHarness
@@ -170,7 +170,7 @@ describe('useTypedMessageLocale', () => {
         throw new Error('ja failed');
       },
     });
-    const ref = createRef<TypedMessageLocaleResult>();
+    const ref = createRef<TypedMessageLocaleController>();
 
     render(
       <HookHarness
@@ -211,7 +211,7 @@ describe('useTypedMessageLocale', () => {
   it('persists the resolved locale to localStorage', async () => {
     const storageKey = 'typed-message:test-locale';
     const loader = createLoader();
-    const ref = createRef<TypedMessageLocaleResult>();
+    const ref = createRef<TypedMessageLocaleController>();
 
     const { unmount } = render(
       <HookHarness
@@ -242,7 +242,7 @@ describe('useTypedMessageLocale', () => {
     expect(window.localStorage.getItem(storageKey)).toBe('ja');
 
     const loader2 = createLoader();
-    const ref2 = createRef<TypedMessageLocaleResult>();
+    const ref2 = createRef<TypedMessageLocaleController>();
 
     render(
       <HookHarness
