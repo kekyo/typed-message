@@ -99,6 +99,7 @@ export const useTypedMessageLocale = (
   }, [loadLocale]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
