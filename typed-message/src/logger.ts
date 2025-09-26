@@ -6,6 +6,8 @@
 import type { LogLevel, Logger as ViteLogger } from 'vite';
 import createDebug from 'debug';
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * Logger interface
  */
@@ -31,6 +33,8 @@ export interface Logger {
    */
   readonly error: (msg: string) => void;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 // Simple logger implementation with prefix
 export const createConsoleLogger = (prefix: string): Logger => {

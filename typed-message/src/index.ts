@@ -3,6 +3,11 @@
 // Under MIT
 // https://github.com/kekyo/typed-message
 
+// vite-plugin is server-side only, so exclude from client-side index.ts
+// export typedMessage from 'typed-message/vite'
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 export {
   TypedMessageProvider,
   useTypedMessage,
@@ -18,9 +23,6 @@ export type {
   LocaleState,
 } from './useLocaleController';
 
-// vite-plugin is server-side only, so exclude from client-side index.ts
-// export typedMessage from 'typed-message/vite'
-
 // Type definition exports
 export type {
   MessageItem,
@@ -32,5 +34,7 @@ export type {
   ParsedMessage,
 } from './types';
 
-// @prettier-max-ignore-deprecated
+/**
+ * @deprecated Use useLocaleController instead.
+ */
 export { useTypedMessageLocale } from './useLocaleController';

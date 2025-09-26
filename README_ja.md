@@ -528,39 +528,6 @@ const simpleResult = getMessage(simpleMessage);
 const paramResult = getMessage(paramMessage, { name: "太郎", age: 30 });
 ```
 
-### useTypedMessageDynamic
-
-この関数は、コンパイル時にキーが特定できない場合に利用するフックです。文字列キーと任意のプレースホルダーパラメータを受け取る `getMessageDynamic` と `tryGetMessageDynamic` を返します。
-
-```typescript
-const { getMessageDynamic, tryGetMessageDynamic } = useTypedMessageDynamic();
-
-const resolved = getMessageDynamic(runtimeKey, { name: '太郎' });
-// キーが見つからない場合は `MESSAGE_NOT_FOUND: ${runtimeKey}` が返ります
-
-const optionalValue = tryGetMessageDynamic(runtimeKey, { name: '太郎' });
-// キーが見つからない場合は undefined を返すので、呼び出し側で自由に扱えます
-```
-
-`getMessageDynamic` はキー未存在時に明示的な文字列を表示したい場合に利用します。`tryGetMessageDynamic` はキー未存在時に `undefined` を返し、UIを非表示にするなどの判断を利用者側に委ねられます。
-
-### TypedMessageDynamic
-
-JSX から `getMessageDynamic` と同じ動作でメッセージを解決するコンポーネントです。キーが見つからない場合は常に `MESSAGE_NOT_FOUND: {key}` を描画します。
-
-#### Props
-
-| プロパティ | 型 | 説明 |
-|------------|-----|------|
-| `messageKey` | `string` | 辞書を検索する実行時キー |
-| `params` | `Record<string, unknown>` (任意) | プレースホルダに渡す値 |
-
-#### 使用例
-
-```tsx
-<TypedMessageDynamic messageKey={runtimeKey} params={{ name: '太郎' }} />
-```
-
 ## 高度な機能
 
 ### プレースホルダ型検証
@@ -694,6 +661,45 @@ export const messages = {
 ```
 
 結果: "Hello 太郎, welcome!" （未使用パラメータは無視されます）
+
+### useTypedMessageDynamic
+
+注意: このフックは高度な使用目的に向けて設計されていて、型安全性が失われます。
+キーを動的に解決しなければならない場合にのみ使用して下さい。
+
+この関数は、コンパイル時にキーが特定できない場合に利用するフックです。文字列キーと任意のプレースホルダーパラメータを受け取る `getMessageDynamic` と `tryGetMessageDynamic` を返します。
+
+```typescript
+const { getMessageDynamic, tryGetMessageDynamic } = useTypedMessageDynamic();
+
+const resolved = getMessageDynamic(runtimeKey, { name: '太郎' });
+// キーが見つからない場合は `MESSAGE_NOT_FOUND: ${runtimeKey}` が返ります
+
+const optionalValue = tryGetMessageDynamic(runtimeKey, { name: '太郎' });
+// キーが見つからない場合は undefined を返すので、呼び出し側で自由に扱えます
+```
+
+`getMessageDynamic` はキー未存在時に明示的な文字列を表示したい場合に利用します。`tryGetMessageDynamic` はキー未存在時に `undefined` を返し、UIを非表示にするなどの判断を利用者側に委ねられます。
+
+### TypedMessageDynamic
+
+注意: このコンポーネントは高度な使用目的に向けて設計されていて、型安全性が失われます。
+キーを動的に解決しなければならない場合にのみ使用して下さい。
+
+JSX から `getMessageDynamic` と同じ動作でメッセージを解決するコンポーネントです。キーが見つからない場合は常に `MESSAGE_NOT_FOUND: {key}` を描画します。
+
+#### Props
+
+| プロパティ | 型 | 説明 |
+|------------|-----|------|
+| `messageKey` | `string` | 辞書を検索する実行時キー |
+| `params` | `Record<string, unknown>` (任意) | プレースホルダに渡す値 |
+
+#### 使用例
+
+```tsx
+<TypedMessageDynamic messageKey={runtimeKey} params={{ name: '太郎' }} />
+```
 
 ----
 

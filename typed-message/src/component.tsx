@@ -7,6 +7,8 @@ import { JSX, useMemo } from 'react';
 import { useTypedMessage, useTypedMessageDynamic } from './provider';
 import type { SimpleMessageItem, MessageItem } from './types';
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * Unified React component for displaying type-safe internationalized messages
  *
@@ -56,8 +58,13 @@ export function TypedMessage<T extends Record<string, any>>(props: {
   return <>{result}</>;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * React component counterpart to {@link useTypedMessageDynamic}.
+ *
+ * Attention: Normally, use {@link TypedMessage} instead of this.
+ * This function is designed for special use cases and LOSES type safety.
  *
  * It resolves messages by string key at render time. When the key is missing
  * the component renders the marker string `MESSAGE_NOT_FOUND: {key}` so that

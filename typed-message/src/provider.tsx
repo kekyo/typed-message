@@ -15,6 +15,8 @@ import type {
   LocaleState,
 } from './useLocaleController';
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 // Create Context
 const TypedMessageContext = createContext<MessageDictionary | null>(null);
 const LocaleControllerContext =
@@ -43,14 +45,12 @@ const isLocaleController = (
   );
 };
 
-const MESSAGE_NOT_FOUND_PREFIX = 'MESSAGE_NOT_FOUND: ';
-
 /**
  * React context provider component for typed internationalization messages
  *
  * Provides message dictionaries to child components through React context.
  * Manages message retrieval and fallback processing throughout the component tree.
- * All TypedMessage components and useTypedMessage hooks must be used within this provider.
+ * All {@link TypedMessage} components and {@link useTypedMessage} hooks must be used within this provider.
  *
  * @param props - Provider configuration props
  * @param props.messages - Message dictionary containing key-value pairs of message identifiers and their translations
@@ -59,12 +59,15 @@ const MESSAGE_NOT_FOUND_PREFIX = 'MESSAGE_NOT_FOUND: ';
  * @example
  * ```tsx
  * import { TypedMessageProvider } from 'typed-message';
+ * import messages from './generated/message';
  * import enMessages from '../locale/en.json';
  *
  * const App = () => {
  *   return (
  *     <TypedMessageProvider messages={enMessages}>
- *       <MyComponent />
+ *       <div>
+ *         <TypedMessage message={messages.PAGE_TITLE} params={{ name: "The blog" }} />
+ *       </div>
  *     </TypedMessageProvider>
  *   );
  * };
@@ -91,11 +94,13 @@ export const TypedMessageProvider = ({
   );
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 // Function to replace placeholders
-function replacePlaceholders(
+const replacePlaceholders = (
   template: string,
   params: Record<string, any>
-): string {
+): string => {
   // Placeholder regex: {name} or {name:type}
   const placeholderRegex = /\{(\w+)(?::\w+)?\}/g;
 
@@ -110,16 +115,19 @@ function replacePlaceholders(
     }
     return match; // Return as-is if parameter not found
   });
-}
+};
 
 /**
  * React hook for retrieving type-safe internationalized messages
+ *
+ * Note: Instead of hooks, there is also the {@link TypedMessage} component,
+ * which is simpler and can be written declaratively using JSX syntax.
  *
  * Returns a function that can retrieve both non-parameterized and parameterized messages
  * in a type-safe manner. The function automatically handles message lookup from the
  * provided dictionary, fallback processing, and parameter substitution for dynamic messages.
  *
- * Must be used within a TypedMessageProvider context.
+ * Must be used within a {@link TypedMessageProvider} context.
  *
  * @returns A getMessage function with two overloads:
  *   - `(messageItem: SimpleMessageItem) => string` - For non-parameterized messages
@@ -216,10 +224,17 @@ export const useLocale = (): LocaleState => {
   );
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+const MESSAGE_NOT_FOUND_PREFIX = 'MESSAGE_NOT_FOUND: ';
+
 /**
  * React hook for runtime message resolution using string keys.
  *
- * Unlike {@link useTypedMessage}, this hook does not rely on generated message
+ * Attention: Normally, use {@link TypedMessage} or {@link useTypedMessage} instead of this.
+ * This function is designed for special use cases and LOSES type safety.
+ *
+ * Unlike useTypedMessage, this hook does not rely on generated message
  * metadata and therefore skips compile-time validation. It is intended for
  * scenarios where message keys are only known at runtime (e.g. CMS content or
  * user input).

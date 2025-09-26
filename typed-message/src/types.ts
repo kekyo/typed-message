@@ -4,6 +4,7 @@
 // https://github.com/kekyo/typed-message
 
 import type { TypedMessageLocaleController } from './useLocaleController';
+
 /**
  * Type definition for non-parameterized message items
  *
