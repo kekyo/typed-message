@@ -3,6 +3,8 @@
 // Under MIT
 // https://github.com/kekyo/typed-message
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 // Vite plugin entry point for typed-message
 // This module provides the Vite plugin for automatic generation of type-safe
 // internationalization messages. Import from 'typed-message/vite' to keep

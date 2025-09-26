@@ -7,6 +7,8 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createMutex } from 'async-primitives';
 import type { MessageDictionary } from './types';
 
+//////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * Status flags exposed by {@link useLocaleController}
  */
@@ -78,6 +80,8 @@ export interface LocaleState {
   setLocale: TypedMessageLocaleController['setLocale'];
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * React hook that encapsulates locale loading, caching and persistence.
  *
@@ -99,10 +103,12 @@ export const useLocaleController = (
   const localeRef = useRef('');
 
   useEffect(() => {
+    // Keep the loader reference fresh so enqueueLoad sees the latest callback.
     loadLocaleRef.current = loadLocale;
   }, [loadLocale]);
 
   useEffect(() => {
+    // Track mount state to avoid mutating React state after unmount.
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
@@ -110,6 +116,7 @@ export const useLocaleController = (
   }, []);
 
   const canUseStorage = useMemo(() => {
+    // Ensure we only touch localStorage in browser environments.
     return typeof window !== 'undefined' && !!window.localStorage;
   }, []);
 
@@ -120,6 +127,7 @@ export const useLocaleController = (
       return undefined;
     }
     try {
+      // Retrieve the last successful locale persisted across sessions.
       const stored = window.localStorage.getItem(persistenceKey);
       return stored ?? undefined;
     } catch (_error) {
@@ -133,6 +141,7 @@ export const useLocaleController = (
         return;
       }
       try {
+        // Persist the locale so the next visit reuses the same translation.
         window.localStorage.setItem(persistenceKey, value);
       } catch (_error) {
         // Ignore persistence failures (e.g. private mode quota exceeded)
@@ -142,10 +151,12 @@ export const useLocaleController = (
   );
 
   const resolveInitialLocale = useCallback(() => {
+    // Highest priority: user persisted locale from a previous session.
     const stored = readStoredLocale();
     if (stored && stored.trim()) {
       return stored.trim();
     }
+    // Fall back to explicit initial locale when provided.
     if (initialLocale && initialLocale.trim()) {
       return initialLocale.trim();
     }
@@ -155,6 +166,7 @@ export const useLocaleController = (
         return candidate.trim();
       }
     }
+    // Ultimately rely on the configured fallback locale.
     if (fallbackLocale && fallbackLocale.trim()) {
       return fallbackLocale.trim();
     }
@@ -188,6 +200,7 @@ export const useLocaleController = (
 
   const runWithMutex = useCallback(
     async <T>(operation: () => Promise<T>): Promise<T> => {
+      // Serialize locale loads to avoid redundant requests and race conditions.
       const handle = await mutexRef.current.lock();
       try {
         return await operation();
@@ -206,6 +219,7 @@ export const useLocaleController = (
       }
 
       const operation = async () => {
+        // Serve dictionaries from cache when available to keep updates snappy.
         const cached = cacheRef.current.get(normalized);
         if (cached) {
           if (apply) {
@@ -215,6 +229,7 @@ export const useLocaleController = (
         }
 
         if (apply && isMountedRef.current) {
+          // Transition into loading state only when applying to the UI.
           setStatus('loading');
           setError(null);
         }
@@ -223,6 +238,7 @@ export const useLocaleController = (
         cacheRef.current.set(normalized, loaded);
 
         if (apply) {
+          // Update state with the freshly loaded dictionary.
           applyLoadedLocale(normalized, loaded);
         }
 
@@ -233,6 +249,7 @@ export const useLocaleController = (
         return await runWithMutex(operation);
       } catch (loadError: unknown) {
         if (apply && isMountedRef.current) {
+          // Flag the failure so callers can display an error message.
           setStatus('error');
           setError(loadError);
         }
@@ -250,6 +267,7 @@ export const useLocaleController = (
       }
 
       if (normalized === localeRef.current) {
+        // Reapply cached dictionary when requesting the current locale again.
         const cached = cacheRef.current.get(normalized);
         if (cached) {
           applyLoadedLocale(normalized, cached);
@@ -264,6 +282,7 @@ export const useLocaleController = (
 
   const preload = useCallback(
     async (requestedLocales: readonly string[]) => {
+      // Deduplicate and sanitize candidate locale names before preloading.
       const uniqueLocales = Array.from(
         new Set(
           requestedLocales
