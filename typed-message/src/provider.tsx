@@ -3,22 +3,34 @@
 // Under MIT
 // https://github.com/kekyo/typed-message
 
-import { createContext, useContext, useCallback, useMemo } from 'react';
+import { createContext, useContext, useCallback, useMemo, useRef } from 'react';
 import type {
   MessageDictionary,
   TypedMessageProviderProps,
   MessageItem,
   SimpleMessageItem,
+  UseTypedMessageDynamicResult,
+  GetMessageFunction,
 } from './types';
 import type {
   TypedMessageLocaleController,
   LocaleState,
 } from './useLocaleController';
+import { ensureUniqueIdentifier, sanitizeIdentifier } from './util';
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
+// Context value exposes both the raw dictionary and a lazily computed map that
+// mirrors the plugin's identifier sanitization rules.
+interface TypedMessageContextValue {
+  messages: MessageDictionary;
+  getSanitizedDictionary: () => Map<string, string>;
+}
+
 // Create Context
-const TypedMessageContext = createContext<MessageDictionary | null>(null);
+const TypedMessageContext = createContext<TypedMessageContextValue | null>(
+  null
+);
 const LocaleControllerContext =
   createContext<TypedMessageLocaleController | null>(null);
 
@@ -44,6 +56,8 @@ const isLocaleController = (
     typeof candidate.dictionary === 'object'
   );
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * React context provider component for typed internationalization messages
@@ -84,10 +98,44 @@ export const TypedMessageProvider = ({
     }
     return (messages as MessageDictionary | undefined) ?? {};
   }, [controller, messages]);
+  const sanitizedCacheRef = useRef<{
+    source: MessageDictionary;
+    map: Map<string, string>;
+  } | null>(null);
+
+  const getSanitizedDictionary = useCallback(() => {
+    const cache = sanitizedCacheRef.current;
+    if (cache && cache.source === dictionary) {
+      return cache.map;
+    }
+
+    const usedIdentifiers = new Set<string>();
+    const sanitizedMap = new Map<string, string>();
+
+    for (const dictionaryKey of Object.keys(dictionary)) {
+      const sanitized = sanitizeIdentifier(dictionaryKey);
+      const uniqueKey = ensureUniqueIdentifier(sanitized, usedIdentifiers);
+
+      if (!sanitizedMap.has(uniqueKey)) {
+        sanitizedMap.set(uniqueKey, dictionaryKey);
+      }
+    }
+
+    sanitizedCacheRef.current = { source: dictionary, map: sanitizedMap };
+    return sanitizedMap;
+  }, [dictionary]);
+
+  const contextValue = useMemo<TypedMessageContextValue>(
+    () => ({
+      messages: dictionary,
+      getSanitizedDictionary,
+    }),
+    [dictionary, getSanitizedDictionary]
+  );
 
   return (
     <LocaleControllerContext.Provider value={controller}>
-      <TypedMessageContext.Provider value={dictionary}>
+      <TypedMessageContext.Provider value={contextValue}>
         {children}
       </TypedMessageContext.Provider>
     </LocaleControllerContext.Provider>
@@ -153,23 +201,16 @@ const replacePlaceholders = (
  * ```
  */
 export const useTypedMessage = () => {
-  const messages = useContext(TypedMessageContext);
+  const context = useContext(TypedMessageContext);
 
   // Check usage outside provider
-  if (messages === null) {
+  if (context === null) {
     throw new Error(
       'useTypedMessage must be used within a TypedMessageProvider'
     );
   }
 
-  // Define the overloaded function type
-  type GetMessageFunction = {
-    (messageItem: SimpleMessageItem): string;
-    <T extends Record<string, any>>(
-      messageItem: MessageItem<T>,
-      params: T
-    ): string;
-  };
+  const { messages } = context;
 
   // Memoize the getMessage function using useCallback
   const getMessage = useCallback(
@@ -178,7 +219,7 @@ export const useTypedMessage = () => {
       params?: any
     ): string => {
       // 1. Get message from context
-      let localizedMessage = messages![messageItem.key];
+      let localizedMessage = messages[messageItem.key];
 
       // 2. Use fallback if no localized message
       if (!localizedMessage) {
@@ -198,6 +239,8 @@ export const useTypedMessage = () => {
 
   return getMessage;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * React hook to access and mutate the active locale managed by a
@@ -229,10 +272,10 @@ export const useLocale = (): LocaleState => {
 const MESSAGE_NOT_FOUND_PREFIX = 'MESSAGE_NOT_FOUND: ';
 
 /**
- * React hook for runtime message resolution using string keys.
- *
  * Attention: Normally, use {@link TypedMessage} or {@link useTypedMessage} instead of this.
  * This function is designed for special use cases and LOSES type safety.
+ *
+ * React hook for runtime message resolution using string keys.
  *
  * Unlike useTypedMessage, this hook does not rely on generated message
  * metadata and therefore skips compile-time validation. It is intended for
@@ -245,19 +288,52 @@ const MESSAGE_NOT_FOUND_PREFIX = 'MESSAGE_NOT_FOUND: ';
  * - `tryGetMessageDynamic(key, params?)`: returns the formatted message or
  *   `undefined` when the lookup fails, allowing the caller to decide how to
  *   handle missing keys.
+ *
+ * @returns {UseTypedMessageDynamicResult} Runtime helpers for string-key lookups.
  */
-export const useTypedMessageDynamic = () => {
-  const messages = useContext(TypedMessageContext);
+export const useTypedMessageDynamic = (): UseTypedMessageDynamicResult => {
+  const context = useContext(TypedMessageContext);
 
-  if (messages === null) {
+  if (context === null) {
     throw new Error(
       'useTypedMessageDynamic must be used within a TypedMessageProvider'
     );
   }
 
+  const { messages, getSanitizedDictionary } = context;
+
+  // The generated message module sanitizes identifiers and may append suffixes
+  // for collisions, so the runtime dictionary still uses original keys. The
+  // provider caches a sanitized lookup map instead of directly calling
+  // messages[sanitizeIdentifier(key)].
+  const sanitizedKeyToDictionaryKey = getSanitizedDictionary();
+
   const tryGetMessageDynamic = useCallback(
     (key: string, params?: Record<string, unknown>) => {
-      const localizedMessage = messages[key];
+      let localizedMessage = messages[key];
+
+      if (!localizedMessage) {
+        const sanitizedBase = sanitizeIdentifier(key);
+
+        let resolvedDictionaryKey =
+          sanitizedKeyToDictionaryKey.get(sanitizedBase);
+
+        if (!resolvedDictionaryKey) {
+          for (const [
+            sanitizedCandidate,
+            dictionaryKey,
+          ] of sanitizedKeyToDictionaryKey) {
+            if (sanitizedCandidate.startsWith(`${sanitizedBase}_`)) {
+              resolvedDictionaryKey = dictionaryKey;
+              break;
+            }
+          }
+        }
+
+        if (resolvedDictionaryKey) {
+          localizedMessage = messages[resolvedDictionaryKey];
+        }
+      }
 
       if (!localizedMessage) {
         return undefined;
@@ -269,7 +345,7 @@ export const useTypedMessageDynamic = () => {
 
       return localizedMessage;
     },
-    [messages]
+    [messages, sanitizedKeyToDictionaryKey]
   );
 
   const getMessageDynamic = useCallback(

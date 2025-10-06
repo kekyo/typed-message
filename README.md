@@ -527,7 +527,7 @@ const simpleResult = getMessage(simpleMessage);
 const paramResult = getMessage(paramMessage, { name: "John", age: 30 });
 ```
 
-## Advanced Features
+## Type-safe Features
 
 ### Placeholder Type Validation
 
@@ -661,7 +661,14 @@ If a placeholder is missing from a locale file, it will be gracefully ignored:
 
 Result: "Hello John, welcome!" (unused parameters are ignored)
 
+-----
+
+## Advanced Features
+
 ### useTypedMessageDynamic
+
+Attention: This hook is designed for advanced use cases and loses type safety.
+Use it only when you must dynamically resolve keys.
 
 Provides an escape hatch for runtime key resolution. It returns `getMessageDynamic` and `tryGetMessageDynamic`, both of which accept a message dictionary key as a string and optional formatting parameters.
 
@@ -678,6 +685,9 @@ const optionalValue = tryGetMessageDynamic(runtimeKey, { name: 'Alice' });
 `getMessageDynamic` is useful when you need a visible fallback string (`MESSAGE_NOT_FOUND: {key}`) for missing runtime keys. `tryGetMessageDynamic` defers the decision to the caller by returning `undefined` for missing keys, allowing custom handling such as hiding UI elements.
 
 ### TypedMessageDynamic
+
+Attention: This hook is designed for advanced use cases and loses type safety.
+Use it only when you must dynamically resolve keys.
 
 React component that mirrors `getMessageDynamic` for JSX usage. It always renders the resolved string, or `MESSAGE_NOT_FOUND: {key}` when the key cannot be found.
 

@@ -29,9 +29,8 @@ export type {
   SimpleMessageItem,
   MessageDictionary,
   TypedMessageProviderProps,
-  FormatterFunction,
-  PlaceholderInfo,
-  ParsedMessage,
+  GetMessageFunction,
+  UseTypedMessageDynamicResult,
 } from './types';
 
 /**

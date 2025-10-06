@@ -528,7 +528,7 @@ const simpleResult = getMessage(simpleMessage);
 const paramResult = getMessage(paramMessage, { name: "太郎", age: 30 });
 ```
 
-## 高度な機能
+## タイプセーフ機能
 
 ### プレースホルダ型検証
 
@@ -661,6 +661,10 @@ export const messages = {
 ```
 
 結果: "Hello 太郎, welcome!" （未使用パラメータは無視されます）
+
+-----
+
+## 高度な機能
 
 ### useTypedMessageDynamic
 

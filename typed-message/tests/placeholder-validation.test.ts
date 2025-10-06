@@ -1,3 +1,8 @@
+// typed-message - Type-safe internationalization library for React and TypeScript
+// Copyright (c) Kouji Matsui (@kekyo@mi.kekyo.net)
+// Under MIT
+// https://github.com/kekyo/typed-message
+
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { existsSync, writeFileSync, readFileSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';

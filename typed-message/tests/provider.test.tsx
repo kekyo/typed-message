@@ -1,3 +1,8 @@
+// typed-message - Type-safe internationalization library for React and TypeScript
+// Copyright (c) Kouji Matsui (@kekyo@mi.kekyo.net)
+// Under MIT
+// https://github.com/kekyo/typed-message
+
 import React, { createRef, forwardRef, useImperativeHandle } from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -389,6 +394,21 @@ describe('TypedMessageProvider', () => {
 
     const element = screen.getByTestId('dynamic-try');
     expect(element.textContent).toBe('Count 7');
+  });
+
+  it('tryGetMessageDynamic resolves keys with invalid identifier characters via sanitization', () => {
+    const sanitizedDictionary = {
+      HELLO_WORLD: 'Hyphenated hello',
+    };
+
+    render(
+      <TypedMessageProvider messages={sanitizedDictionary}>
+        <DynamicTryComponent messageKey="HELLO-WORLD" />
+      </TypedMessageProvider>
+    );
+
+    const element = screen.getByTestId('dynamic-try');
+    expect(element.textContent).toBe('Hyphenated hello');
   });
 
   it('TypedMessageDynamic renders dynamic message lookup', () => {

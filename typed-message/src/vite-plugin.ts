@@ -8,11 +8,67 @@ import { existsSync } from 'fs';
 import { readFile, readdir, stat, writeFile, mkdir } from 'fs/promises';
 import { join, resolve, dirname, extname, basename } from 'path';
 import JSON5 from 'json5';
-import type { PlaceholderInfo, ParsedMessage } from './types';
 import { createConsoleLogger, createViteLoggerAdapter, Logger } from './logger';
 import { version, git_commit_hash } from './generated/packageMetadata';
+import { ensureUniqueIdentifier, sanitizeIdentifier } from './util';
 
 //////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Type for placeholder analysis results
+ *
+ * Contains information about a single placeholder found in a message template.
+ * Used by the Vite plugin during code generation to analyze message patterns
+ * and generate appropriate TypeScript types.
+ *
+ * @example
+ * ```typescript
+ * const placeholder: PlaceholderInfo = {
+ *   name: "userName",
+ *   type: "string",
+ *   position: 0
+ * };
+ * ```
+ */
+interface PlaceholderInfo {
+  /** The name of the placeholder variable (e.g., "name" from "{name}") */
+  name: string;
+  /** The TypeScript type of the placeholder value */
+  type: 'string' | 'number' | 'boolean' | 'date';
+  /** The position of this placeholder in the parameter list (0-based index) */
+  position: number;
+}
+
+/**
+ * Type for message analysis results
+ *
+ * Contains comprehensive information about a parsed message template,
+ * including its placeholders and fallback content. Used by the Vite plugin
+ * to generate type-safe message definitions.
+ *
+ * @example
+ * ```typescript
+ * const parsedMessage: ParsedMessage = {
+ *   key: "WELCOME_USER",
+ *   template: "Hello {name}, you are {age:number} years old!",
+ *   placeholders: [
+ *     { name: "name", type: "string", position: 0 },
+ *     { name: "age", type: "number", position: 1 }
+ *   ],
+ *   fallback: "Hello {name}, you are {age:number} years old!"
+ * };
+ * ```
+ */
+interface ParsedMessage {
+  /** The message key identifier */
+  key: string;
+  /** The original message template with placeholder syntax */
+  template: string;
+  /** Array of placeholder information found in the template */
+  placeholders: PlaceholderInfo[];
+  /** The fallback message text to use when translation is not available */
+  fallback: string;
+}
 
 /**
  * Configuration options for the typed-message Vite plugin
@@ -336,130 +392,6 @@ const checkPlaceholderTypeConsistency = async (
 };
 
 // List of disallowed identifiers to prevent generating invalid TypeScript names.
-const RESERVED_WORDS = new Set([
-  'abstract',
-  'any',
-  'as',
-  'asserts',
-  'async',
-  'await',
-  'boolean',
-  'break',
-  'case',
-  'catch',
-  'class',
-  'const',
-  'continue',
-  'debugger',
-  'declare',
-  'default',
-  'delete',
-  'do',
-  'else',
-  'enum',
-  'export',
-  'extends',
-  'false',
-  'finally',
-  'for',
-  'from',
-  'function',
-  'get',
-  'if',
-  'implements',
-  'import',
-  'in',
-  'infer',
-  'instanceof',
-  'interface',
-  'is',
-  'keyof',
-  'let',
-  'module',
-  'namespace',
-  'never',
-  'new',
-  'null',
-  'number',
-  'object',
-  'of',
-  'package',
-  'private',
-  'protected',
-  'public',
-  'readonly',
-  'require',
-  'return',
-  'set',
-  'static',
-  'string',
-  'super',
-  'switch',
-  'symbol',
-  'this',
-  'throw',
-  'true',
-  'try',
-  'type',
-  'typeof',
-  'undefined',
-  'var',
-  'void',
-  'while',
-  'with',
-  'yield',
-]);
-
-/**
- * Normalizes a raw message key into a TypeScript-safe identifier string.
- * @param input - Original message key sourced from locale data.
- * @returns Identifier that avoids reserved words and invalid characters.
- */
-const sanitizeIdentifier = (input: string): string => {
-  // Replace unsupported characters so the resulting identifier is valid.
-  let sanitized = input.replace(/[^A-Za-z0-9_$]/g, '_');
-
-  if (sanitized.length === 0) {
-    // Guarantee we always return a non-empty string.
-    sanitized = '_';
-  }
-
-  if (/^[^A-Za-z_$]/.test(sanitized)) {
-    // Prefix invalid starting characters to satisfy TypeScript naming rules.
-    sanitized = `_${sanitized}`;
-  }
-
-  if (RESERVED_WORDS.has(sanitized)) {
-    // Avoid colliding with reserved words by prepending an underscore.
-    sanitized = `_${sanitized}`;
-  }
-
-  return sanitized;
-};
-
-/**
- * Ensures a sanitized identifier does not collide with previously generated names.
- * @param baseIdentifier - Preferred identifier derived from the message key.
- * @param usedIdentifiers - Set containing identifiers already assigned.
- * @returns Unique identifier suitable for inclusion in generated code.
- */
-const ensureUniqueIdentifier = (
-  baseIdentifier: string,
-  usedIdentifiers: Set<string>
-): string => {
-  let candidate = baseIdentifier;
-  let index = 1;
-
-  while (usedIdentifiers.has(candidate)) {
-    // Append an incrementing suffix until the identifier becomes unique.
-    candidate = `${baseIdentifier}_${index}`;
-    index++;
-  }
-
-  // Reserve the identifier so future lookups respect uniqueness.
-  usedIdentifiers.add(candidate);
-  return candidate;
-};
 
 /**
  * Builds a JSDoc block for non-parameterized messages in the generated file.

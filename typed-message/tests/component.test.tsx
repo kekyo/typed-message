@@ -1,3 +1,8 @@
+// typed-message - Type-safe internationalization library for React and TypeScript
+// Copyright (c) Kouji Matsui (@kekyo@mi.kekyo.net)
+// Under MIT
+// https://github.com/kekyo/typed-message
+
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { TypedMessageProvider } from '../src/provider';
