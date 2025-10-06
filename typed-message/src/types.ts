@@ -169,3 +169,30 @@ export interface ParsedMessage {
   /** The fallback message text to use when translation is not available */
   fallback: string;
 }
+
+/**
+ * Result returned by {@link useTypedMessageDynamic}.
+ * @remarks Attention: Normally, use {@link TypedMessage} or {@link useTypedMessage} instead of this.
+ *          This function is designed for special use cases and LOSES type safety.
+ */
+export interface UseTypedMessageDynamicResult {
+  /**
+   * Resolves a message and always returns a string, falling back to a marker when missing.
+   * @param key - Message key string
+   * @param params - Optional parameters
+   * @remarks Attention: Normally, use {@link TypedMessage} or {@link useTypedMessage} instead of this.
+   *          This function is designed for special use cases and LOSES type safety.
+   */
+  getMessageDynamic: (key: string, params?: Record<string, unknown>) => string;
+  /**
+   * Resolves a message but returns `undefined` when the key is absent.
+   * @param key - Message key string
+   * @param params - Optional parameters
+   * @remarks Attention: Normally, use {@link TypedMessage} or {@link useTypedMessage} instead of this.
+   *          This function is designed for special use cases and LOSES type safety.
+   */
+  tryGetMessageDynamic: (
+    key: string,
+    params?: Record<string, unknown>
+  ) => string | undefined;
+}

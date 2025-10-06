@@ -527,7 +527,7 @@ const simpleResult = getMessage(simpleMessage);
 const paramResult = getMessage(paramMessage, { name: "John", age: 30 });
 ```
 
-## Advanced Features
+## Type-safe Features
 
 ### Placeholder Type Validation
 
@@ -661,7 +661,14 @@ If a placeholder is missing from a locale file, it will be gracefully ignored:
 
 Result: "Hello John, welcome!" (unused parameters are ignored)
 
+-----
+
+## Advanced Features
+
 ### useTypedMessageDynamic
+
+Attention: This hook is designed for advanced use cases and loses type safety.
+Use it only when you must dynamically resolve keys.
 
 Provides an escape hatch for runtime key resolution. It returns `getMessageDynamic` and `tryGetMessageDynamic`, both of which accept a message dictionary key as a string and optional formatting parameters.
 

@@ -9,6 +9,7 @@ import type {
   TypedMessageProviderProps,
   MessageItem,
   SimpleMessageItem,
+  UseTypedMessageDynamicResult,
 } from './types';
 import type {
   TypedMessageLocaleController,
@@ -54,6 +55,8 @@ const isLocaleController = (
     typeof candidate.dictionary === 'object'
   );
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * React context provider component for typed internationalization messages
@@ -245,6 +248,8 @@ export const useTypedMessage = () => {
   return getMessage;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * React hook to access and mutate the active locale managed by a
  * {@link TypedMessageLocaleController}.
@@ -291,8 +296,10 @@ const MESSAGE_NOT_FOUND_PREFIX = 'MESSAGE_NOT_FOUND: ';
  * - `tryGetMessageDynamic(key, params?)`: returns the formatted message or
  *   `undefined` when the lookup fails, allowing the caller to decide how to
  *   handle missing keys.
+ *
+ * @returns {UseTypedMessageDynamicResult} Runtime helpers for string-key lookups.
  */
-export const useTypedMessageDynamic = () => {
+export const useTypedMessageDynamic = (): UseTypedMessageDynamicResult => {
   const context = useContext(TypedMessageContext);
 
   if (context === null) {
