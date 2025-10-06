@@ -14,6 +14,7 @@ import type {
   TypedMessageLocaleController,
   LocaleState,
 } from './useLocaleController';
+import { ensureUniqueIdentifier, sanitizeIdentifier } from './util';
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -255,9 +256,52 @@ export const useTypedMessageDynamic = () => {
     );
   }
 
+  // The generated message module sanitizes identifiers and may append suffixes
+  // for collisions, so the runtime dictionary still uses original keys. We
+  // therefore build our own map instead of just calling
+  // messages[sanitizeIdentifier(key)].
+  const sanitizedKeyToDictionaryKey = useMemo(() => {
+    const sanitizedMap = new Map<string, string>();
+    const usedIdentifiers = new Set<string>();
+
+    for (const dictionaryKey of Object.keys(messages)) {
+      const sanitized = sanitizeIdentifier(dictionaryKey);
+      const uniqueKey = ensureUniqueIdentifier(sanitized, usedIdentifiers);
+
+      if (!sanitizedMap.has(uniqueKey)) {
+        sanitizedMap.set(uniqueKey, dictionaryKey);
+      }
+    }
+
+    return sanitizedMap;
+  }, [messages]);
+
   const tryGetMessageDynamic = useCallback(
     (key: string, params?: Record<string, unknown>) => {
-      const localizedMessage = messages[key];
+      let localizedMessage = messages[key];
+
+      if (!localizedMessage) {
+        const sanitizedBase = sanitizeIdentifier(key);
+
+        let resolvedDictionaryKey =
+          sanitizedKeyToDictionaryKey.get(sanitizedBase);
+
+        if (!resolvedDictionaryKey) {
+          for (const [
+            sanitizedCandidate,
+            dictionaryKey,
+          ] of sanitizedKeyToDictionaryKey) {
+            if (sanitizedCandidate.startsWith(`${sanitizedBase}_`)) {
+              resolvedDictionaryKey = dictionaryKey;
+              break;
+            }
+          }
+        }
+
+        if (resolvedDictionaryKey) {
+          localizedMessage = messages[resolvedDictionaryKey];
+        }
+      }
 
       if (!localizedMessage) {
         return undefined;
@@ -269,7 +313,7 @@ export const useTypedMessageDynamic = () => {
 
       return localizedMessage;
     },
-    [messages]
+    [messages, sanitizedKeyToDictionaryKey]
   );
 
   const getMessageDynamic = useCallback(

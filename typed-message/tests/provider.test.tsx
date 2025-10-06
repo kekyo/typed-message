@@ -391,6 +391,21 @@ describe('TypedMessageProvider', () => {
     expect(element.textContent).toBe('Count 7');
   });
 
+  it('tryGetMessageDynamic resolves keys with invalid identifier characters via sanitization', () => {
+    const sanitizedDictionary = {
+      HELLO_WORLD: 'Hyphenated hello',
+    };
+
+    render(
+      <TypedMessageProvider messages={sanitizedDictionary}>
+        <DynamicTryComponent messageKey="HELLO-WORLD" />
+      </TypedMessageProvider>
+    );
+
+    const element = screen.getByTestId('dynamic-try');
+    expect(element.textContent).toBe('Hyphenated hello');
+  });
+
   it('TypedMessageDynamic renders dynamic message lookup', () => {
     const testMessages = {
       COMPONENT_KEY: 'Component message {item}',
