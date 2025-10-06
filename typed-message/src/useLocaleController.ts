@@ -10,12 +10,12 @@ import type { MessageDictionary } from './types';
 //////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Status flags exposed by {@link useLocaleController}
+ * Locale controller status flags exposed by {@link useLocaleController}
  */
 export type LocaleLoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 /**
- * Options for {@link useLocaleController}
+ * Locale controller options for {@link useLocaleController}
  */
 export interface UseLocaleControllerOptions {
   /**
@@ -42,7 +42,7 @@ export interface UseLocaleControllerOptions {
 }
 
 /**
- * Result object returned by {@link useLocaleController}
+ * Locale controller result object returned by {@link useLocaleController}
  */
 export interface TypedMessageLocaleController {
   /**
@@ -75,8 +75,17 @@ export interface TypedMessageLocaleController {
  * Simplified locale state exposed by {@link useLocale}.
  */
 export interface LocaleState {
+  /**
+   * Currently active locale identifier.
+   */
   locale: string;
+  /**
+   * Load status for the active locale.
+   */
   status: LocaleLoadStatus;
+  /**
+   * Switches the active locale, awaiting completion.
+   */
   setLocale: TypedMessageLocaleController['setLocale'];
 }
 

@@ -8,12 +8,67 @@ import { existsSync } from 'fs';
 import { readFile, readdir, stat, writeFile, mkdir } from 'fs/promises';
 import { join, resolve, dirname, extname, basename } from 'path';
 import JSON5 from 'json5';
-import type { PlaceholderInfo, ParsedMessage } from './types';
 import { createConsoleLogger, createViteLoggerAdapter, Logger } from './logger';
 import { version, git_commit_hash } from './generated/packageMetadata';
 import { ensureUniqueIdentifier, sanitizeIdentifier } from './util';
 
 //////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Type for placeholder analysis results
+ *
+ * Contains information about a single placeholder found in a message template.
+ * Used by the Vite plugin during code generation to analyze message patterns
+ * and generate appropriate TypeScript types.
+ *
+ * @example
+ * ```typescript
+ * const placeholder: PlaceholderInfo = {
+ *   name: "userName",
+ *   type: "string",
+ *   position: 0
+ * };
+ * ```
+ */
+interface PlaceholderInfo {
+  /** The name of the placeholder variable (e.g., "name" from "{name}") */
+  name: string;
+  /** The TypeScript type of the placeholder value */
+  type: 'string' | 'number' | 'boolean' | 'date';
+  /** The position of this placeholder in the parameter list (0-based index) */
+  position: number;
+}
+
+/**
+ * Type for message analysis results
+ *
+ * Contains comprehensive information about a parsed message template,
+ * including its placeholders and fallback content. Used by the Vite plugin
+ * to generate type-safe message definitions.
+ *
+ * @example
+ * ```typescript
+ * const parsedMessage: ParsedMessage = {
+ *   key: "WELCOME_USER",
+ *   template: "Hello {name}, you are {age:number} years old!",
+ *   placeholders: [
+ *     { name: "name", type: "string", position: 0 },
+ *     { name: "age", type: "number", position: 1 }
+ *   ],
+ *   fallback: "Hello {name}, you are {age:number} years old!"
+ * };
+ * ```
+ */
+interface ParsedMessage {
+  /** The message key identifier */
+  key: string;
+  /** The original message template with placeholder syntax */
+  template: string;
+  /** Array of placeholder information found in the template */
+  placeholders: PlaceholderInfo[];
+  /** The fallback message text to use when translation is not available */
+  fallback: string;
+}
 
 /**
  * Configuration options for the typed-message Vite plugin

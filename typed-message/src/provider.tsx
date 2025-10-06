@@ -10,6 +10,7 @@ import type {
   MessageItem,
   SimpleMessageItem,
   UseTypedMessageDynamicResult,
+  GetMessageFunction,
 } from './types';
 import type {
   TypedMessageLocaleController,
@@ -211,15 +212,6 @@ export const useTypedMessage = () => {
 
   const { messages } = context;
 
-  // Define the overloaded function type
-  type GetMessageFunction = {
-    (messageItem: SimpleMessageItem): string;
-    <T extends Record<string, any>>(
-      messageItem: MessageItem<T>,
-      params: T
-    ): string;
-  };
-
   // Memoize the getMessage function using useCallback
   const getMessage = useCallback(
     ((
@@ -280,10 +272,10 @@ export const useLocale = (): LocaleState => {
 const MESSAGE_NOT_FOUND_PREFIX = 'MESSAGE_NOT_FOUND: ';
 
 /**
- * React hook for runtime message resolution using string keys.
- *
  * Attention: Normally, use {@link TypedMessage} or {@link useTypedMessage} instead of this.
  * This function is designed for special use cases and LOSES type safety.
+ *
+ * React hook for runtime message resolution using string keys.
  *
  * Unlike useTypedMessage, this hook does not rely on generated message
  * metadata and therefore skips compile-time validation. It is intended for

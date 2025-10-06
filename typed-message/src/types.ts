@@ -5,6 +5,8 @@
 
 import type { TypedMessageLocaleController } from './useLocaleController';
 
+//////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * Type definition for non-parameterized message items
  *
@@ -51,6 +53,8 @@ export interface MessageItem<T extends Record<string, any>> {
   fallback: string;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * Type definition for message dictionary
  *
@@ -96,79 +100,28 @@ export interface TypedMessageProviderProps {
   children?: React.ReactNode;
 }
 
-/**
- * Type helper for formatter functions
- *
- * Represents a function that takes an object with parameters and returns
- * a formatted string. Used internally for message formatting with parameters.
- *
- * @template T - An object type representing the function parameters
- *
- * @example
- * ```typescript
- * const formatter: FormatterFunction<{ name: string; age: number }> = ({ name, age }) =>
- *   `Hello ${name}, you are ${age} years old!`;
- * ```
- */
-export type FormatterFunction<T extends Record<string, any>> = (
-  params: T
-) => string;
+//////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Type for placeholder analysis results
+ * Overloaded function signature returned by {@link useTypedMessage}.
  *
- * Contains information about a single placeholder found in a message template.
- * Used by the Vite plugin during code generation to analyze message patterns
- * and generate appropriate TypeScript types.
- *
- * @example
- * ```typescript
- * const placeholder: PlaceholderInfo = {
- *   name: "userName",
- *   type: "string",
- *   position: 0
- * };
- * ```
- */
-export interface PlaceholderInfo {
-  /** The name of the placeholder variable (e.g., "name" from "{name}") */
-  name: string;
-  /** The TypeScript type of the placeholder value */
-  type: 'string' | 'number' | 'boolean' | 'date';
-  /** The position of this placeholder in the parameter list (0-based index) */
-  position: number;
-}
-
-/**
- * Type for message analysis results
- *
- * Contains comprehensive information about a parsed message template,
- * including its placeholders and fallback content. Used by the Vite plugin
- * to generate type-safe message definitions.
+ * Accepts either a {@link SimpleMessageItem} (no parameters) or a
+ * {@link MessageItem} with its strongly typed parameter object and resolves the
+ * corresponding localized string.
  *
  * @example
  * ```typescript
- * const parsedMessage: ParsedMessage = {
- *   key: "WELCOME_USER",
- *   template: "Hello {name}, you are {age:number} years old!",
- *   placeholders: [
- *     { name: "name", type: "string", position: 0 },
- *     { name: "age", type: "number", position: 1 }
- *   ],
- *   fallback: "Hello {name}, you are {age:number} years old!"
- * };
+ * const getMessage = useTypedMessage();
+ * const greeting = getMessage(messages.USER_GREETING, { name: 'Alice' });
  * ```
  */
-export interface ParsedMessage {
-  /** The message key identifier */
-  key: string;
-  /** The original message template with placeholder syntax */
-  template: string;
-  /** Array of placeholder information found in the template */
-  placeholders: PlaceholderInfo[];
-  /** The fallback message text to use when translation is not available */
-  fallback: string;
-}
+export type GetMessageFunction = {
+  (messageItem: SimpleMessageItem): string;
+  <T extends Record<string, any>>(
+    messageItem: MessageItem<T>,
+    params: T
+  ): string;
+};
 
 /**
  * Result returned by {@link useTypedMessageDynamic}.
@@ -178,7 +131,7 @@ export interface ParsedMessage {
 export interface UseTypedMessageDynamicResult {
   /**
    * Resolves a message and always returns a string, falling back to a marker when missing.
-   * @param key - Message key string
+   * @param key - Message key raw string
    * @param params - Optional parameters
    * @remarks Attention: Normally, use {@link TypedMessage} or {@link useTypedMessage} instead of this.
    *          This function is designed for special use cases and LOSES type safety.
@@ -186,7 +139,7 @@ export interface UseTypedMessageDynamicResult {
   getMessageDynamic: (key: string, params?: Record<string, unknown>) => string;
   /**
    * Resolves a message but returns `undefined` when the key is absent.
-   * @param key - Message key string
+   * @param key - Message key raw string
    * @param params - Optional parameters
    * @remarks Attention: Normally, use {@link TypedMessage} or {@link useTypedMessage} instead of this.
    *          This function is designed for special use cases and LOSES type safety.

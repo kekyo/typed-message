@@ -686,6 +686,9 @@ const optionalValue = tryGetMessageDynamic(runtimeKey, { name: 'Alice' });
 
 ### TypedMessageDynamic
 
+Attention: This hook is designed for advanced use cases and loses type safety.
+Use it only when you must dynamically resolve keys.
+
 React component that mirrors `getMessageDynamic` for JSX usage. It always renders the resolved string, or `MESSAGE_NOT_FOUND: {key}` when the key cannot be found.
 
 #### Props
