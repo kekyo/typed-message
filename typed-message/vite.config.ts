@@ -35,7 +35,7 @@ export default defineConfig({
         index: resolve(__dirname, 'src/index.ts'),
         'vite-plugin': resolve(__dirname, 'src/vite.ts'),
       },
-      name: 'TypedMessage',
+      name: 'typed-message',
       fileName: (format, entryName) =>
         `${entryName}.${format === 'es' ? 'mjs' : 'cjs'}`,
       formats: ['es', 'cjs'],
@@ -59,6 +59,7 @@ export default defineConfig({
         exports: 'named',
       },
     },
+    target: 'es2018',
     sourcemap: true,
     minify: false,
     emptyOutDir: true,
