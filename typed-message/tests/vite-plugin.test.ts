@@ -145,10 +145,10 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).toContain('_default: { ');
     expect(generatedCode).toContain('key: "default"');
 
-    expect(generatedCode).toContain('* greet-user: Hello dashed');
-    expect(generatedCode).toContain('* greet user: Hello spaced');
-    expect(generatedCode).toContain('* 123start: Number prefixed');
-    expect(generatedCode).toContain('* default: Reserved keyword');
+    expect(generatedCode).toContain('* greet-user ==> "Hello dashed"');
+    expect(generatedCode).toContain('* greet user ==> "Hello spaced"');
+    expect(generatedCode).toContain('* 123start ==> "Number prefixed"');
+    expect(generatedCode).toContain('* default ==> "Reserved keyword"');
   });
 
   it('aggregates multiple locale files according to priority order', async () => {
