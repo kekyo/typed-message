@@ -7,7 +7,6 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import react from '@vitejs/plugin-react';
 import dts from 'unplugin-dts/vite';
 import screwUp from 'screw-up';
 import prettierMax from 'prettier-max';
@@ -17,7 +16,6 @@ const __dirname = dirname(__filename);
 
 export default defineConfig({
   plugins: [
-    react(),
     dts({
       include: ['src/**/*'],
       exclude: ['src/**/*.test.*', 'src/**/*.spec.*'],
@@ -43,6 +41,8 @@ export default defineConfig({
       external: [
         'react',
         'react-dom',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
         'fs',
         'fs/promises',
         'os',
