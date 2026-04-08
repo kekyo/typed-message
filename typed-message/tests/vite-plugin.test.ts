@@ -4,7 +4,14 @@
 // https://github.com/kekyo/typed-message
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { writeFileSync, mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
+import {
+  writeFileSync,
+  mkdirSync,
+  rmSync,
+  existsSync,
+  readFileSync,
+  statSync,
+} from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { randomUUID } from 'crypto';
@@ -110,6 +117,66 @@ describe('typedMessagePlugin', () => {
     expect(generatedCode).toContain('key: "DESCRIPTION"');
     expect(generatedCode).toContain('fallback: "Test Description"');
     expect(generatedCode).toContain('as SimpleMessageItem');
+  });
+
+  it('does not rewrite unchanged output and rewrites when generated content changes', async () => {
+    const localePath = join(localeDir, 'en.json');
+    const localeData = {
+      TITLE: 'Test Title',
+    };
+
+    writeFileSync(localePath, JSON.stringify(localeData, null, 2));
+
+    const plugin = typedMessage({
+      localeDir: 'locale',
+      outputPath: 'src/generated/messages.ts',
+    });
+
+    const mockConfig = { root: testDir };
+    await callPluginHook(plugin.configResolved, mockConfig);
+    await callPluginHook(plugin.buildStart);
+
+    expect(existsSync(outputFile)).toBe(true);
+
+    const initialCode = readFileSync(outputFile, 'utf-8');
+    const initialStat = statSync(outputFile);
+
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    writeFileSync(localePath, JSON.stringify(localeData, null, 2));
+    await callPluginHook(plugin.handleHotUpdate, {
+      file: localePath,
+      server: { ws: { send: () => undefined } },
+    });
+
+    const unchangedCode = readFileSync(outputFile, 'utf-8');
+    const unchangedStat = statSync(outputFile);
+
+    expect(unchangedCode).toBe(initialCode);
+    expect(unchangedStat.mtimeMs).toBe(initialStat.mtimeMs);
+
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    writeFileSync(
+      localePath,
+      JSON.stringify(
+        {
+          ...localeData,
+          DESCRIPTION: 'Updated Description',
+        },
+        null,
+        2
+      )
+    );
+    await callPluginHook(plugin.handleHotUpdate, {
+      file: localePath,
+      server: { ws: { send: () => undefined } },
+    });
+
+    const changedCode = readFileSync(outputFile, 'utf-8');
+    const changedStat = statSync(outputFile);
+
+    expect(changedCode).not.toBe(initialCode);
+    expect(changedCode).toContain('DESCRIPTION: { ');
+    expect(changedStat.mtimeMs).toBeGreaterThan(unchangedStat.mtimeMs);
   });
 
   it('sanitizes invalid locale keys while preserving original metadata', async () => {
