@@ -40,12 +40,12 @@
     "images/typed-message-120-c.png"
   ],
   "scripts": {
-    "build": "./gen-packageMetadata.sh && vite build",
+    "build": "screw-up metadata && vite build",
     "test": "npm run build && vitest run",
     "pack": "npm run build && screw-up pack --pack-destination ../artifacts"
   },
   "dependencies": {
-    "async-primitives": ">=1.4.0",
+    "async-primitives": ">=1.7.0",
     "debug": ">=4.4.0",
     "json5": ">=2.0.0",
     "react": ">=16.0.0",
@@ -59,12 +59,12 @@
     "@types/react": ">=16.0.0",
     "@types/react-dom": ">=16.0.0",
     "jsdom": ">=23.0.0",
-    "prettier-max": ">=1.10.0",
+    "prettier-max": ">=1.14.0",
     "react": ">=16.0.0",
     "react-dom": ">=16.0.0",
-    "screw-up": ">=1.13.0",
+    "screw-up": ">=1.30.0",
     "typescript": ">=5.0.0",
-    "vite-plugin-dts": ">=4.5.0",
+    "unplugin-dts": ">=1.0.0-beta.6",
     "vitest": ">=1.6.0"
   },
   "engines": {

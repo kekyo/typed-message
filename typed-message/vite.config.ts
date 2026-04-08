@@ -8,7 +8,7 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import react from '@vitejs/plugin-react';
-import dts from 'vite-plugin-dts';
+import dts from 'unplugin-dts/vite';
 import screwUp from 'screw-up';
 import prettierMax from 'prettier-max';
 
@@ -21,7 +21,6 @@ export default defineConfig({
     dts({
       include: ['src/**/*'],
       exclude: ['src/**/*.test.*', 'src/**/*.spec.*'],
-      outDir: 'dist',
       insertTypesEntry: true,
     }),
     screwUp({
@@ -40,7 +39,7 @@ export default defineConfig({
         `${entryName}.${format === 'es' ? 'mjs' : 'cjs'}`,
       formats: ['es', 'cjs'],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [
         'react',
         'react-dom',
