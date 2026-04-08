@@ -30,16 +30,16 @@
       "require": "./dist/index.cjs"
     },
     "./vite": {
-      "types": "./dist/vite-plugin.d.ts",
-      "import": "./dist/vite-plugin.mjs",
-      "require": "./dist/vite-plugin.cjs"
+      "types": "./dist/vite.d.ts",
+      "import": "./dist/vite.mjs",
+      "require": "./dist/vite.cjs"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "screw-up metadata && vite build",
+    "build": "screw-up metadata && vite build && BUILD_TARGET=vite vite build",
     "test": "npm run build && vitest run",
     "pack": "npm run build && screw-up pack --pack-destination ../artifacts"
   },

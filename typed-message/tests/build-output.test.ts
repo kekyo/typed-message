@@ -20,6 +20,8 @@ describe('build output', () => {
     });
 
     expect(indexMjs).toMatch(/from ["']react\/jsx-runtime["']/);
+    expect(indexMjs).not.toContain('from "./vite.mjs"');
+    expect(indexMjs).not.toContain('from "./vite-plugin.mjs"');
     expect(indexMjs).not.toContain('__require("react")');
     expect(indexMjs).not.toContain("require('react')");
     expect(indexMjs).not.toContain('react-jsx-runtime.development.js');
@@ -31,6 +33,8 @@ describe('build output', () => {
     });
 
     expect(indexCjs).toContain('require("react/jsx-runtime")');
+    expect(indexCjs).not.toContain('require("./vite.cjs")');
+    expect(indexCjs).not.toContain('require("./vite-plugin.cjs")');
     expect(indexCjs).not.toContain('react-jsx-runtime.development.js');
   });
 });
