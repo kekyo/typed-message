@@ -36,8 +36,7 @@
     }
   },
   "files": [
-    "dist",
-    "images/typed-message-120-c.png"
+    "dist"
   ],
   "scripts": {
     "build": "screw-up metadata && vite build",
