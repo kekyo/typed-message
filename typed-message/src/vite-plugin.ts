@@ -495,13 +495,23 @@ const generateMessageFile = async (
       await mkdir(outputDir, { recursive: true });
     }
 
-    // Write file
-    await writeFile(outputPath, tsCode, 'utf-8');
+    const existingCode = existsSync(outputPath)
+      ? await readFile(outputPath, 'utf-8')
+      : undefined;
 
-    // Provide quick feedback in both build and dev workflows.
-    logger.info(
-      `Generated typed messages: ${outputPath} (${Object.keys(aggregatedMessages).length} keys)`
-    );
+    if (existingCode === tsCode) {
+      // Avoid touching the generated file when the content is identical.
+      logger.info(
+        `Typed messages unchanged: ${outputPath} (${Object.keys(aggregatedMessages).length} keys)`
+      );
+    } else {
+      await writeFile(outputPath, tsCode, 'utf-8');
+
+      // Provide quick feedback in both build and dev workflows.
+      logger.info(
+        `Generated typed messages: ${outputPath} (${Object.keys(aggregatedMessages).length} keys)`
+      );
+    }
 
     // Warnings in logs
     if (warnings.length > 0) {
