@@ -7,6 +7,10 @@
     "typed-message",
     "demo"
   ],
+  "files": [
+    "LICENSE",
+    "images/typed-message-120-c.png"
+  ],
   "scripts": {
     "build": "npm run build --workspaces",
     "test": "npm run test --workspace=typed-message",
